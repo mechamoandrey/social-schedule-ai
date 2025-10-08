@@ -8,6 +8,8 @@ import SchedulePreview from '@/components/SchedulePreview';
 import SuggestedHolidays from '@/components/SuggestedHolidays';
 import Link from 'next/link';
 import DevInfo from '@/components/DevInfo';
+import UsageBanner from '@/components/UsageBanner';
+import { loadUsageSummary, canUseAI, incAI } from '@/lib/plan/usage';
 import QualitySummary from '@/components/QualitySummary';
 import StagedDrafts from '@/components/StagedDrafts';
 import EditOnePostModal from '@/components/EditOnePostModal';
@@ -50,6 +52,12 @@ export default function ProjectKanban() {
       return; 
     }
     setProject(pj.data);
+
+    // Load usage summary
+    try { 
+      const u = await loadUsageSummary(sb, pj.data.agency_id); 
+      setUsage(u); 
+    } catch (e) {}
 
     const cs = await sb
       .from('kanban_columns')
@@ -143,6 +151,37 @@ export default function ProjectKanban() {
         <h1 className="text-2xl font-bold">Kanban do Projeto</h1>
         <div className="flex items-center gap-2">
           <div className="text-sm text-neutral-500">{project?.name}</div>
+          {project?.id && (
+            <>
+              <Link href={`/projects/${project.id}/calendar`} className="border rounded px-2 py-1 text-xs hover:bg-neutral-50">
+                Calendário
+              </Link>
+              <Link href={`/agency/members`} className="border rounded px-2 py-1 text-xs hover:bg-neutral-50">
+                Membros
+              </Link>
+              <button
+                className='border rounded px-2 py-1 text-xs'
+                onClick={async ()=>{
+                  try{
+                    const sb = supabaseBrowser();
+                    const { data, error } = await sb.rpc('create_review_link', {
+                      p_project_id: project.id,
+                      p_days: 14
+                    });
+                    if (error) throw error;
+                    const row = Array.isArray(data) ? data[0] : data;
+                    const url = `${window.location.origin}/review/${row.link_token}`;
+                    await navigator.clipboard.writeText(url);
+                    alert('Link de revisão criado e copiado. Envie ao cliente.');
+                  } catch (e) {
+                    alert(e.message);
+                  }
+                }}
+              >
+                Gerar link de revisão
+              </button>
+            </>
+          )}
           <button 
             onClick={async () => {
               if (!confirm('Excluir TODOS os posts deste projeto?')) return;
@@ -153,7 +192,7 @@ export default function ProjectKanban() {
                 alert(`Excluídos ${count} posts.`);
                 await loadAll();
               }
-            }} 
+            }}
             className="ml-2 border rounded px-2 py-1 text-xs text-red-600 border-red-300 hover:bg-red-50"
           >
             Excluir todos os posts
@@ -245,6 +284,8 @@ function AIGenerator({ project, onInserted }) {
   const [suggested, setSuggested] = useState([]);
   const [selectedSuggestions, setSelectedSuggestions] = useState([]);
   const [dev, setDev] = useState({ raw: '', userPrompt: '', systemExcerpt: '' });
+  const [usage, setUsage] = useState(null);
+  const [warned80, setWarned80] = useState(false);
   const [reviewPost, setReviewPost] = useState(null);
   const [reviewOpen, setReviewOpen] = useState(false);
   const [error, setError] = useState('');
@@ -269,6 +310,22 @@ function AIGenerator({ project, onInserted }) {
     })();
   }, [project, sb]);
 
+  // Aviso de 80% uma vez por sessão
+  useEffect(() => {
+    if (!usage) return;
+    try {
+      const used = Number(usage.used || 0), quota = Number(usage.quota || 0);
+      const pct = quota > 0 ? (used / quota) * 100 : 0;
+      const key = `warn80_${usage.yyyymm}`;
+      const already = sessionStorage.getItem(key) === '1';
+      if (pct >= 80 && pct < 100 && !already && !warned80) {
+        alert(`Atenção: você atingiu ${Math.round(pct)}% da sua cota mensal de IA.`);
+        sessionStorage.setItem(key, '1');
+        setWarned80(true);
+      }
+    } catch (e) {}
+  }, [usage, warned80]);
+
   async function callAI(e) {
     e.preventDefault();
     setLoading(true);
@@ -284,7 +341,26 @@ function AIGenerator({ project, onInserted }) {
       if (!r.ok) {
         throw new Error(j.error || 'Falha na IA');
       }
+      
+      // Depois de gerar, checa cota pelo número de posts que veio
+      const count = Array.isArray(j?.schedule?.posts) ? j.schedule.posts.length : 0;
+      try {
+        const ck = await canUseAI(sb, project.agency_id, count);
+        if (!ck?.allowed) { 
+          alert(`Geração excede a cota de IA (posts=${count}, restam ${ck?.remaining || 0}). Motivo: ${ck?.reason}`); 
+          return; 
+        }
+      } catch (e) { 
+        alert(e.message); 
+        return; 
+      }
+      
       setPreview(j.schedule);
+      try { 
+        await incAI(sb, project.agency_id, (j.schedule?.posts || []).length); 
+        const u = await loadUsageSummary(sb, project.agency_id); 
+        setUsage(u); 
+      } catch (e) {}
       const sug = j.schedule?.suggested_holidays || [];
       setSuggested(sug);
       setSelectedSuggestions([]);
@@ -335,7 +411,12 @@ function AIGenerator({ project, onInserted }) {
         <div className="fixed inset-0 bg-black/40 grid place-items-center p-4 z-50">
           <div className="bg-white w-full max-w-3xl rounded-xl shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
             <div className="px-4 py-3 border-b flex items-center justify-between">
-              <h3 className="font-semibold">Gerar cronograma (IA)</h3>
+                  <h3 className="font-semibold">Gerar cronograma (IA)</h3>
+                  {usage && (
+                    <div className="mt-2">
+                      <UsageBanner usage={usage} onManage={() => window.location.href = '/settings/plan'} />
+                    </div>
+                  )}
               <div className="flex items-center gap-2">
                 <Link href="/help/cronogramas" className="text-sm underline">Ajuda</Link>
                 <button 
@@ -484,7 +565,32 @@ function AIGenerator({ project, onInserted }) {
                       onRegenerate={(e) => { callAI(e); }}
                       onAddSinglePost={async (h) => {
                         try {
-                          const r = await fetch('/api/ai/generate-post', { 
+                          if (!(await (async () => { 
+                          try { 
+                            const ck = await canUseAI(sb, project.agency_id, 1); 
+                            if (!ck?.allowed) { 
+                              alert(`Limite de IA atingido (restam ${ck?.remaining || 0}). Motivo: ${ck?.reason}`); 
+                              return false; 
+                            } 
+                            return true; 
+                          } catch (e) { 
+                            alert(e.message); 
+                            return false; 
+                          } 
+                        })())) return;
+                        
+                        const canNow = () => { 
+                          const rem = Number(usage?.remaining || 0); 
+                          const over = !!usage?.overage_enabled; 
+                          const trial = usage?.trial_end_at && new Date(usage.trial_end_at) > new Date(); 
+                          return rem > 0 || over || trial; 
+                        };
+                        if (!canNow()) { 
+                          alert('Sem saldo de IA para gerar este post. Faça upgrade, ative overage ou aguarde a renovação.'); 
+                          return; 
+                        }
+                        
+                        const r = await fetch('/api/ai/generate-post', { 
                             method: 'POST', 
                             headers: { 'Content-Type': 'application/json' }, 
                             body: JSON.stringify({ 
@@ -500,7 +606,12 @@ function AIGenerator({ project, onInserted }) {
                           const j = await r.json();
                           if (!r.ok) throw new Error(j.error || 'Falha ao gerar post');
                           setReviewPost({ ...j.post, __origin: 'staged' }); 
-                          setReviewOpen(true); 
+                          setReviewOpen(true);
+                          try { 
+                            await incAI(sb, project.agency_id, 1); 
+                            const u = await loadUsageSummary(sb, project.agency_id); 
+                            setUsage(u); 
+                          } catch (e) {}
                           return;
                         } catch (e) { 
                           alert(e.message); 
