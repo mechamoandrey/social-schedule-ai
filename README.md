@@ -1,40 +1,195 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# Social Scheduler AI
 
-## Getting Started
+Uma plataforma completa para agências de marketing digital gerenciarem cronogramas de posts em redes sociais com inteligência artificial.
 
-First, run the development server:
+## 🚀 Funcionalidades
 
+### 📅 Gerenciamento de Projetos
+- **Kanban Board**: Visualize e organize posts por status (A criar, Em revisão, Aprovado, Ajustar)
+- **Calendário Mensal**: Visualização em calendário com drag-and-drop para reorganizar posts
+- **Criação Manual**: Adicione posts individualmente com todos os detalhes necessários
+
+### 🤖 Inteligência Artificial
+- **Geração de Cronogramas**: Crie cronogramas completos baseados em parâmetros do cliente
+- **Geração de Posts Individuais**: Gere posts específicos para feriados e datas especiais
+- **Controle de Uso**: Sistema de cotas com planos (Starter, Pro, Business)
+- **Overage**: Opção de uso além da cota mensal
+
+### 👥 Gestão de Equipe
+- **Sistema de Convites**: Convide membros para agências com diferentes níveis de acesso
+- **Roles**: agency_admin, social_media, client_viewer
+- **Múltiplas Agências**: Suporte para gerenciar várias agências
+
+### 🔗 Revisão Pública
+- **Links de Revisão**: Compartilhe links seguros com clientes para revisar posts
+- **Ações de Revisão**: Aprovar ou solicitar ajustes diretamente
+- **Comentários**: Sistema de comentários para feedback detalhado
+
+### 📊 Controle de Qualidade
+- **Análise de Qualidade**: Verificação automática de frequência, feriados e consistência
+- **Sugestões de Feriados**: IA sugere feriados relevantes para o cliente
+- **Validação de Conteúdo**: Verificação de limites de caracteres e consistência
+
+## 🛠️ Tecnologias
+
+- **Frontend**: Next.js 15, React 19, Tailwind CSS 4
+- **Backend**: Next.js API Routes, Supabase
+- **Banco de Dados**: PostgreSQL (via Supabase)
+- **Autenticação**: Supabase Auth
+- **IA**: OpenAI GPT (configurável)
+- **Deploy**: Vercel (recomendado)
+
+## 📋 Pré-requisitos
+
+- Node.js 18+ 
+- Conta no Supabase
+- Chave da API OpenAI (opcional, para funcionalidades de IA)
+
+## 🚀 Instalação
+
+1. **Clone o repositório**
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+git clone <repository-url>
+cd social-scheduler-ai
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+2. **Instale as dependências**
+```bash
+npm install
+# ou
+yarn install
+```
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
+3. **Configure as variáveis de ambiente**
+Crie um arquivo `.env.local` na raiz do projeto:
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+OPENAI_API_KEY=your_openai_api_key
+```
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+4. **Configure o banco de dados**
+Execute as migrações SQL no Supabase (arquivos em `supabase/migrations/`):
+- `001_init.sql` - Estrutura inicial
+- `002_ai_plans.sql` - Planos e uso de IA
+- `003_invitations.sql` - Sistema de convites
+- `004_review_links.sql` - Links de revisão pública
+- `005_reset_seed.sql` - Dados de exemplo
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+5. **Execute o projeto**
+```bash
+npm run dev
+# ou
+yarn dev
+```
 
-## Learn More
+Acesse [http://localhost:3000](http://localhost:3000) no seu navegador.
 
-To learn more about Next.js, take a look at the following resources:
+## 📁 Estrutura do Projeto
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+```
+social-scheduler-ai/
+├── components/           # Componentes React reutilizáveis
+│   ├── Layout.js        # Layout principal
+│   ├── KanbanCard.js    # Card do Kanban
+│   ├── MonthCalendar.js # Calendário mensal
+│   ├── UsageBanner.js   # Banner de uso de IA
+│   └── ...
+├── lib/                 # Utilitários e configurações
+│   ├── ai/             # Configurações de IA
+│   ├── plan/           # Sistema de planos
+│   ├── supabaseClient.js
+│   └── ...
+├── pages/              # Páginas Next.js
+│   ├── api/            # API Routes
+│   ├── projects/       # Páginas de projetos
+│   ├── agency/         # Gestão de agências
+│   └── ...
+├── supabase/           # Migrações e configurações do banco
+│   └── migrations/
+└── styles/             # Estilos globais
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## 🔧 Scripts Disponíveis
 
-## Deploy on Vercel
+```bash
+npm run dev          # Servidor de desenvolvimento
+npm run build        # Build para produção
+npm run start        # Servidor de produção
+npm run lint         # Linter ESLint
+npm run dev:seed     # Reset de dados de desenvolvimento
+```
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 🎯 Como Usar
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+### 1. Criar uma Agência
+- Faça login e crie sua primeira agência
+- Configure o plano (Starter, Pro ou Business)
+
+### 2. Adicionar Membros
+- Use o sistema de convites para adicionar membros da equipe
+- Defina roles apropriados para cada membro
+
+### 3. Criar Projetos
+- Crie projetos para cada cliente
+- Configure o mês e informações do cliente
+
+### 4. Gerar Cronogramas
+- Use a IA para gerar cronogramas completos
+- Ajuste parâmetros como frequência, tom de voz, produtos
+- Revise e edite posts antes de inserir
+
+### 5. Gerenciar Posts
+- Use o Kanban para organizar posts por status
+- Visualize no calendário para ver distribuição temporal
+- Compartilhe links de revisão com clientes
+
+## 🔒 Segurança
+
+- **Row Level Security (RLS)** no Supabase
+- **Autenticação obrigatória** para todas as operações
+- **Controle de acesso baseado em roles**
+- **Links de revisão com expiração**
+- **Validação de permissões** em todas as operações
+
+## 📈 Planos e Limites
+
+| Plano | Membros | Clientes | Posts IA/mês |
+|-------|---------|----------|--------------|
+| Starter | 3 | 5 | 50 |
+| Pro | 10 | 20 | 300 |
+| Business | 50 | 200 | 3000 |
+
+## 🤝 Contribuição
+
+1. Fork o projeto
+2. Crie uma branch para sua feature (`git checkout -b feature/AmazingFeature`)
+3. Commit suas mudanças (`git commit -m 'Add some AmazingFeature'`)
+4. Push para a branch (`git push origin feature/AmazingFeature`)
+5. Abra um Pull Request
+
+## 📝 Licença
+
+Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalhes.
+
+## 🆘 Suporte
+
+Para suporte e dúvidas:
+- Abra uma issue no GitHub
+- Consulte a documentação em `/help/cronogramas`
+- Entre em contato com a equipe de desenvolvimento
+
+## 🔄 Roadmap
+
+- [ ] Integração com APIs de redes sociais
+- [ ] Agendamento automático de posts
+- [ ] Analytics e relatórios
+- [ ] Templates de posts personalizáveis
+- [ ] Sistema de aprovação em múltiplas etapas
+- [ ] App mobile
+- [ ] Integração com ferramentas de design
+
+---
+
+Desenvolvido com ❤️ para agências de marketing digital
