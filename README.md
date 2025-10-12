@@ -14,6 +14,8 @@ Uma plataforma completa para agências de marketing digital gerenciarem cronogra
 - **Geração de Posts Individuais**: Gere posts específicos para feriados e datas especiais
 - **Controle de Uso**: Sistema de cotas com planos (Starter, Pro, Business)
 - **Overage**: Opção de uso além da cota mensal
+- **Monitoramento de Uso**: Banner visual mostrando status da cota de IA
+- **Controle de Acesso**: Botões desabilitados quando cota esgotada
 
 ### 👥 Gestão de Equipe
 - **Sistema de Convites**: Convide membros para agências com diferentes níveis de acesso
@@ -29,6 +31,12 @@ Uma plataforma completa para agências de marketing digital gerenciarem cronogra
 - **Análise de Qualidade**: Verificação automática de frequência, feriados e consistência
 - **Sugestões de Feriados**: IA sugere feriados relevantes para o cliente
 - **Validação de Conteúdo**: Verificação de limites de caracteres e consistência
+
+### 🛠️ Ferramentas de Desenvolvimento
+- **Hub de Desenvolvimento**: Página especial para desenvolvedores com login rápido
+- **Login Automático**: Teste diferentes perfis de usuário (Admin, Social Media, Cliente)
+- **Gestão de Projetos**: Visualização e navegação rápida entre projetos
+- **Links de Revisão**: Criação e gerenciamento de links públicos para testes
 
 ## 🛠️ Tecnologias
 
@@ -94,8 +102,11 @@ social-scheduler-ai/
 │   ├── Layout.js        # Layout principal
 │   ├── KanbanCard.js    # Card do Kanban
 │   ├── MonthCalendar.js # Calendário mensal
-│   ├── UsageBanner.js   # Banner de uso de IA
+│   ├── AiUsageBanner.js # Banner de uso de IA
+│   ├── UsageBanner.js   # Banner de uso de IA (legado)
 │   └── ...
+├── hooks/               # Custom hooks React
+│   └── useAiUsage.js    # Hook para gerenciar uso de IA
 ├── lib/                 # Utilitários e configurações
 │   ├── ai/             # Configurações de IA
 │   ├── plan/           # Sistema de planos
@@ -105,6 +116,7 @@ social-scheduler-ai/
 │   ├── api/            # API Routes
 │   ├── projects/       # Páginas de projetos
 │   ├── agency/         # Gestão de agências
+│   ├── dev/            # Ferramentas de desenvolvimento
 │   └── ...
 ├── supabase/           # Migrações e configurações do banco
 │   └── migrations/
@@ -145,6 +157,12 @@ npm run dev:seed     # Reset de dados de desenvolvimento
 - Visualize no calendário para ver distribuição temporal
 - Compartilhe links de revisão com clientes
 
+### 6. Desenvolvimento e Testes
+- Acesse `/dev` para o hub de desenvolvimento (apenas local)
+- Use login rápido para testar diferentes perfis
+- Monitore uso de IA em tempo real
+- Crie links de revisão para testes
+
 ## 🔒 Segurança
 
 - **Row Level Security (RLS)** no Supabase
@@ -182,6 +200,9 @@ Para suporte e dúvidas:
 
 ## 🔄 Roadmap
 
+- [x] Sistema de monitoramento de uso de IA
+- [x] Hub de desenvolvimento para testes
+- [x] Controle de acesso baseado em cotas
 - [ ] Integração com APIs de redes sociais
 - [ ] Agendamento automático de posts
 - [ ] Analytics e relatórios
