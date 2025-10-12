@@ -1,31 +1,87 @@
-export const config = { 
-  api: { 
-    bodyParser: { 
-      sizeLimit: '1mb' 
-    } 
-  } 
+export const config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '1mb'
+    }
+  }
 };
 
 import { PostSchema } from '@/lib/ai/scheduleSchema';
+import { supabaseServer } from '@/lib/supabaseClient';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
-  
+
   try {
-    const { 
-      client_name, 
-      client_website, 
-      month, 
-      holiday, 
-      tone, 
-      platforms, 
-      model 
+    const {
+      client_id,
+      client_name,
+      client_website,
+      month,
+      holiday,
+      tone,
+      platforms,
+      model
     } = req.body || {};
-    
+
     if (!client_name || !month || !holiday?.date || !holiday?.name) {
-      return res.status(400).json({ 
-        error: 'client_name, month e holiday{date,name} são obrigatórios' 
+      return res.status(400).json({
+        error: 'client_name, month e holiday{date,name} são obrigatórios'
       });
+    }
+
+    let scraped_data = null;
+    if (client_id) {
+      try {
+        const authHeader = req.headers.authorization;
+        const token = authHeader?.replace('Bearer ', '');
+
+        let supabase;
+        if (token) {
+          const { createClient } = await import('@supabase/supabase-js');
+          supabase = createClient(
+            process.env.NEXT_PUBLIC_SUPABASE_URL,
+            process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+            {
+              global: {
+                headers: {
+                  Authorization: `Bearer ${token}`,
+                },
+              },
+            }
+          );
+        } else {
+          supabase = supabaseServer(req, res);
+        }
+
+        const { data, error } = await supabase
+          .from('client_scraped_data')
+          .select('business_type, about, products_or_services, location, target_audience, key_differentials, themes_for_posts')
+          .eq('client_id', client_id)
+          .maybeSingle();
+
+        if (!error && data) {
+          scraped_data = data;
+        }
+      } catch (err) {
+        // Silently fail - scraped data is optional
+      }
+    }
+
+    let scrapedContext = '';
+    if (scraped_data) {
+      scrapedContext = `\n\n
+        Informações extraidas do site do cliente:
+          - Tipo de negócio: ${scraped_data.business_type || 'N/A'}
+          - Sobre: ${scraped_data.about || 'N/A'}
+          - Localização: ${scraped_data.location || 'N/A'}
+          - Público-alvo: ${scraped_data.target_audience || 'N/A'}
+          - Diferenciais: ${scraped_data.key_differentials?.join(', ') || 'N/A'}
+      `;
+
+      if (scraped_data.products_or_services?.length > 0) {
+        scrapedContext += `\n- Produtos/Serviços: ${scraped_data.products_or_services.slice(0, 5).map(p => p.name).join(', ')}`;
+      }
     }
 
     const system = `Você é um agente de social media. Gere APENAS um post em JSON válido, seguindo o schema:
@@ -50,6 +106,8 @@ Regras:
 Feriado: ${holiday.date} — ${holiday.name}.
 Plataformas: ${platforms || 'Instagram'}.
 Tom: ${tone || 'técnico didático, direto e cordial'}.
+
+${scrapedContext}
 
 Saída: apenas o JSON do post com {date,title,arte,legenda,cta,status}.`;
 
