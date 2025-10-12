@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/router';
 import Layout from '@/components/Layout';
 import { supabaseBrowser } from '@/lib/supabaseClient';
+import { useAiUsage } from '@/hooks/useAiUsage';
+import AiUsageBanner from '@/components/AiUsageBanner';
 import KanbanColumn from '@/components/KanbanColumn';
 import PostModal from '@/components/PostModal';
 import SchedulePreview from '@/components/SchedulePreview';
@@ -18,6 +20,8 @@ export default function ProjectKanban() {
   const r = useRouter();
   const { id } = r.query; // project id
   const [project, setProject] = useState(null);
+  // IA usage (depende do agency_id do projeto)
+  const usage = useAiUsage(project?.agency_id);
   const [columns, setColumns] = useState([]);
   const [cards, setCards] = useState([]);
   const [postsById, setPostsById] = useState({});
@@ -147,6 +151,8 @@ export default function ProjectKanban() {
 
   return (
     <Layout>
+      {/* Aviso de cota de IA */}
+      {!usage?.loading && <div className='mb-3'><AiUsageBanner usage={usage} /></div>}
       <div className="flex items-center justify-between mb-4">
         <h1 className="text-2xl font-bold">Kanban do Projeto</h1>
         <div className="flex items-center gap-2">
@@ -401,10 +407,12 @@ function AIGenerator({ project, onInserted }) {
   return (
     <div className="mt-8">
       <button 
-        className="border rounded px-3 py-2 hover:bg-neutral-50" 
+        className="disabled:opacity-50 disabled:cursor-not-allowed border rounded px-3 py-2 hover:bg-neutral-50" 
         onClick={() => setOpen(true)}
+        disabled={usage?.level === 'block'} 
+        title={usage?.level === 'block' ? 'Sem cota de IA: ajuste plano ou aguarde próximo mês' : undefined}
       >
-        Gerar cronograma com IA
+        Gerar conteúdo com IA {usage?.quota ? `(${usage.used}/${usage.quota})` : ''}
       </button>
       
       {open && (
@@ -412,11 +420,7 @@ function AIGenerator({ project, onInserted }) {
           <div className="bg-white w-full max-w-3xl rounded-xl shadow-lg overflow-hidden max-h-[90vh] flex flex-col">
             <div className="px-4 py-3 border-b flex items-center justify-between">
                   <h3 className="font-semibold">Gerar cronograma (IA)</h3>
-                  {usage && (
-                    <div className="mt-2">
-                      <UsageBanner usage={usage} onManage={() => window.location.href = '/settings/plan'} />
-                    </div>
-                  )}
+                  {!usage?.loading && <div className='mb-2'><AiUsageBanner usage={usage} /></div>}
               <div className="flex items-center gap-2">
                 <Link href="/help/cronogramas" className="text-sm underline">Ajuda</Link>
                 <button 

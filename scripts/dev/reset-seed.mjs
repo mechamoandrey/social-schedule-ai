@@ -1,12 +1,13 @@
 import { createClient } from '@supabase/supabase-js';
 
+
 if (process.env.NODE_ENV === 'production') {
   console.error('❌ Não rode o seed em produção.');
   process.exit(1);
 }
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+const url = NEXT_PUBLIC_SUPABASE_URL;
+const serviceKey = SUPABASE_SERVICE_ROLE_KEY;
 if (!url || !serviceKey) {
   console.error('❌ Faltam envs: NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY');
   process.exit(1);
@@ -15,20 +16,40 @@ if (!url || !serviceKey) {
 const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
 
 async function ensureUser(email, password) {
-  // tenta criar, ignora erro de já existir
-  const { error: e } = await admin.auth.admin.createUser({ 
-    email, 
-    password, 
-    email_confirm: true 
+  // 1) tenta criar
+  const { data: created, error: createErr } = await admin.auth.admin.createUser({
+    email,
+    password,
+    email_confirm: true
   });
-  if (e && !String(e.message || '').includes('already registered')) throw e;
-  
-  const { data: listed } = await admin.auth.admin.listUsers({ 
-    page: 1, 
-    perPage: 1000 
-  });
-  const found = listed?.users?.find(u => u.email === email);
-  if (!found) throw new Error('Usuário não encontrado: ' + email);
+  // se criou agora, ótimo
+  if (!createErr && created?.user?.id) {
+    return created.user.id;
+  }
+  // 2) se já existe, seguimos; qualquer outro erro, propaga
+  const msg = String(createErr?.message || '').toLowerCase();
+  const code = createErr?.code || createErr?.status;
+  const isAlready = msg.includes('already') && msg.includes('registered');
+  const isEmailExists = code === 'email_exists' || code === 422;
+  if (createErr && !(isAlready || isEmailExists)) {
+    throw createErr;
+  }
+  // 3) buscar o usuário por e-mail (paginando)
+  let page = 1, perPage = 1000, found = null, listed;
+  do {
+    const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
+    if (error) throw error;
+    listed = data?.users || [];
+    found = listed.find(u => u.email === email) || null;
+    page++;
+  } while (!found && (listed?.length === perPage));
+  if (!found?.id) throw new Error('Usuário não encontrado: ' + email);
+  // 4) garante senha de demo (útil em DEV)
+  try {
+    await admin.auth.admin.updateUserById(found.id, { password });
+  } catch (_) {
+    // ignore se não suportado na instância
+  }
   return found.id;
 }
 

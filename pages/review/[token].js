@@ -8,7 +8,7 @@ export default function PublicReview() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState('');
-  const [comment, setComment] = useState('');
+  const [comments, setComments] = useState({}); // { [postId]: string }
   const [actor, setActor] = useState('');
 
   useEffect(() => {
@@ -29,32 +29,38 @@ export default function PublicReview() {
     })();
   }, [token]);
 
-  async function act(postId, action) {
+  async function approve(postId) {
     try {
-      const r = await fetch('/api/review/action', {
+      const r = await fetch(`/api/review/action?token=${token}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          token, 
-          postId, 
-          action, 
-          comment: action === 'request_changes' ? comment : null, 
-          actor: actor || null 
-        })
+        body: JSON.stringify({ postId, action: 'approve', actor: actor || null })
       });
-      
       const j = await r.json();
-      if (!r.ok) throw new Error(j.error || 'Falha');
-      
-      // atualiza localmente
-      setPosts(ps => ps.map(p => 
-        p.id === postId 
-          ? { ...p, status: j.status, revision_comment: action === 'request_changes' ? comment : null }
-          : p
-      ));
-      
-      setComment('');
-      alert(action === 'approve' ? 'Aprovado!' : 'Solicitado ajuste!');
+      if (!r.ok) throw new Error(j.error || 'Falha ao aprovar');
+      // Atualiza o post local
+      setPosts(prev => prev.map(p => p.id === postId ? { ...p, status: 'Aprovado', revision_comment: null } : p));
+      alert('Aprovado!');
+    } catch (e) {
+      alert(e.message);
+    }
+  }
+
+  async function requestChanges(postId) {
+    try {
+      const comment = (comments[postId] || '').trim();
+      if (!comment) { alert('Escreva um comentário.'); return; }
+      const r = await fetch(`/api/review/action?token=${token}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ postId, action: 'request_changes', comment, actor: actor || null })
+      });
+      const j = await r.json();
+      if (!r.ok) throw new Error(j.error || 'Falha ao pedir ajustes');
+      // Atualiza o post local e limpa só o comentário desse post
+      setPosts(prev => prev.map(p => p.id === postId ? { ...p, status: 'Ajustar', revision_comment: comment } : p));
+      setComments(prev => { const next = { ...prev }; delete next[postId]; return next; });
+      alert('Solicitado ajuste!');
     } catch (e) {
       alert(e.message);
     }
@@ -66,7 +72,7 @@ export default function PublicReview() {
 
   return (
     <div className="max-w-3xl mx-auto p-4">
-      <h1 className="text-xl font-semibold">{hdr.client_name} — {hdr.project_name}</h1>
+      <h1 className="text-xl font-semibold">{hdr.client_name} — {hdr.project_name} <span className='text-sm text-neutral-500'>({posts?.length||0} posts)</span></h1>
       <div className="text-sm text-neutral-600 mb-3">
         Mês: {hdr.month} · Expira em: {new Date(hdr.expires_at).toLocaleString()} 
         {hdr.expired ? ' · (Expirado)' : ''}
@@ -120,25 +126,28 @@ export default function PublicReview() {
             <div className="mt-3 flex flex-col gap-2">
               <div className="flex gap-2">
                 <button 
-                  onClick={() => act(p.id, 'approve')} 
+                  onClick={() => approve(p.id)} 
                   className="border rounded px-3 py-2 text-sm hover:bg-green-50"
                 >
                   Aprovar
                 </button>
                 <button 
-                  onClick={() => act(p.id, 'request_changes')} 
+                  onClick={() => requestChanges(p.id)} 
                   className="border rounded px-3 py-2 text-sm hover:bg-amber-50"
+                  disabled={!((comments[p.id] ?? '').trim())}
                 >
                   Pedir ajustes
                 </button>
               </div>
               
+              <label className="text-xs" htmlFor={`comment-${p.id}`}>Comentário</label>
               <textarea 
-                value={comment} 
-                onChange={e => setComment(e.target.value)} 
+                id={`comment-${p.id}`}
+                value={comments[p.id] ?? ''} 
+                onChange={e => setComments(prev => ({ ...prev, [p.id]: e.target.value }))} 
                 className="border rounded px-3 py-2 text-sm w-full" 
                 rows="2" 
-                placeholder="Comentário (obrigatório ao pedir ajustes)"
+                placeholder="Explique o ajuste desejado…"
               />
               
               <div className="text-xs text-neutral-500">
