@@ -1,6 +1,6 @@
 import KanbanCard from './KanbanCard';
 
-export default function KanbanColumn({ column, cards, postsById, onOpen, onDropCard }) {
+export default function KanbanColumn({ column, cards, postsById, onOpen, onDropCard, selectedPostIds, onToggleSelection }) {
   function allowDrop(e) {
     e.preventDefault();
   }
@@ -32,7 +32,9 @@ export default function KanbanColumn({ column, cards, postsById, onOpen, onDropC
             key={c.id} 
             card={c} 
             post={postsById[c.post_id]} 
-            onOpen={onOpen} 
+            onOpen={onOpen}
+            isSelected={selectedPostIds?.has(c.post_id)}
+            onToggleSelection={onToggleSelection}
           />
         ))}
       </div>

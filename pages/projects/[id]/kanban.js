@@ -26,6 +26,12 @@ export default function ProjectKanban() {
   const [cards, setCards] = useState([]);
   const [postsById, setPostsById] = useState({});
   const [openPost, setOpenPost] = useState(null);
+  
+  // --- Filtros & seleção (novo) ---
+  const [filterStatus, setFilterStatus] = useState(''); // '', 'A criar', 'Em revisão', 'Aprovado', 'Ajustar'
+  const [filterFrom, setFilterFrom] = useState('');     // YYYY-MM-DD
+  const [filterTo, setFilterTo] = useState('');         // YYYY-MM-DD
+  const [selectedPostIds, setSelectedPostIds] = useState(new Set());
   const [form, setForm] = useState({ 
     date: '', 
     title: '', 
@@ -93,13 +99,26 @@ export default function ProjectKanban() {
     setPostsById(postsMap);
   }
 
+  // Filtrar posts baseado nos filtros
+  const filteredPosts = useMemo(() => {
+    return Object.values(postsById).filter(p => {
+      if (filterStatus && p.status !== filterStatus) return false;
+      if (filterFrom && p.date < filterFrom) return false;
+      if (filterTo && p.date > filterTo) return false;
+      return true;
+    });
+  }, [postsById, filterStatus, filterFrom, filterTo]);
+
   const cardsByColumn = useMemo(() => {
     const map = Object.fromEntries(columns.map(c => [c.id, []]));
     cards.forEach(c => {
-      if (map[c.column_id]) map[c.column_id].push(c);
+      // Só incluir cards cujos posts estão nos posts filtrados
+      if (map[c.column_id] && filteredPosts.some(p => p.id === c.post_id)) {
+        map[c.column_id].push(c);
+      }
     });
     return map;
-  }, [columns, cards]);
+  }, [columns, cards, filteredPosts]);
 
   async function onDropCard(payload, targetColumn) {
     try {
@@ -153,8 +172,85 @@ export default function ProjectKanban() {
     <Layout>
       {/* Aviso de cota de IA */}
       {!usage?.loading && <div className='mb-3'><AiUsageBanner usage={usage} /></div>}
+
+      {/* Toolbar de filtros */}
+      <div className="mb-3 grid gap-2 md:grid-cols-5">
+        <div className="md:col-span-2">
+          <label className="block text-xs mb-1">Status</label>
+          <select className="border rounded px-2 py-1 w-full text-sm" value={filterStatus} onChange={e=>setFilterStatus(e.target.value)}>
+            <option value="">Todos</option>
+            <option>A criar</option>
+            <option>Em revisão</option>
+            <option>Aprovado</option>
+            <option>Ajustar</option>
+          </select>
+        </div>
+        <div>
+          <label className="block text-xs mb-1">De</label>
+          <input type="date" className="border rounded px-2 py-1 w-full text-sm" value={filterFrom} onChange={e=>setFilterFrom(e.target.value)} />
+        </div>
+        <div>
+          <label className="block text-xs mb-1">Até</label>
+          <input type="date" className="border rounded px-2 py-1 w-full text-sm" value={filterTo} onChange={e=>setFilterTo(e.target.value)} />
+        </div>
+      </div>
+
+      {/* Bulk actions */}
+      {selectedPostIds.size > 0 && (
+        <div className="mb-3 flex flex-wrap items-center gap-2 text-sm">
+          <span className="text-neutral-600">Selecionados: {selectedPostIds.size}</span>
+          <select id="bulk-status" className="border rounded px-2 py-1"
+            onChange={async (e)=>{
+              const newStatus = e.target.value;
+              if (!newStatus) return;
+              if (!confirm(`Mover ${selectedPostIds.size} post(s) para '${newStatus}'?`)) { e.target.value=''; return; }
+              const sb = supabaseBrowser();
+              const ids = Array.from(selectedPostIds);
+              const { error } = await sb.from('posts').update({ status: newStatus }).in('id', ids);
+              if (error) { alert(error.message); e.target.value=''; return; }
+              setPostsById(prev => {
+                const next = { ...prev };
+                ids.forEach(id => {
+                  if (next[id]) next[id] = { ...next[id], status: newStatus };
+                });
+                return next;
+              });
+              setSelectedPostIds(new Set());
+              e.target.value='';
+            }}>
+            <option value="">Mover para…</option>
+            <option value="A criar">A criar</option>
+            <option value="Em revisão">Em revisão</option>
+            <option value="Aprovado">Aprovado</option>
+            <option value="Ajustar">Ajustar</option>
+          </select>
+          <button className="border rounded px-2 py-1 bg-rose-50" onClick={async()=>{
+            if (!confirm(`Excluir ${selectedPostIds.size} post(s)?`)) return;
+            const sb = supabaseBrowser();
+            const ids = Array.from(selectedPostIds);
+            const { error } = await sb.from('posts').delete().in('id', ids);
+            if (error) { alert(error.message); return; }
+            setPostsById(prev => {
+              const next = { ...prev };
+              ids.forEach(id => delete next[id]);
+              return next;
+            });
+            setSelectedPostIds(new Set());
+            await loadAll(); // Recarregar para atualizar cards
+          }}>Excluir selecionados</button>
+        </div>
+      )}
+
       <div className="flex items-center justify-between mb-4">
-        <h1 className="text-2xl font-bold">Kanban do Projeto</h1>
+        <div>
+          <h1 className="text-2xl font-bold">Kanban do Projeto</h1>
+          <div className="text-sm text-neutral-500">
+            Exibindo {filteredPosts.length} de {Object.keys(postsById).length} posts
+            {(filterStatus || filterFrom || filterTo) && (
+              <span className="ml-2 text-blue-600">(filtrado)</span>
+            )}
+          </div>
+        </div>
         <div className="flex items-center gap-2">
           <div className="text-sm text-neutral-500">{project?.name}</div>
           {project?.id && (
@@ -253,7 +349,19 @@ export default function ProjectKanban() {
             cards={cardsByColumn[col.id] || []} 
             postsById={postsById} 
             onOpen={(post) => setOpenPost(post)} 
-            onDropCard={onDropCard} 
+            onDropCard={onDropCard}
+            selectedPostIds={selectedPostIds}
+            onToggleSelection={(postId) => {
+              setSelectedPostIds(prev => {
+                const next = new Set(prev);
+                if (next.has(postId)) {
+                  next.delete(postId);
+                } else {
+                  next.add(postId);
+                }
+                return next;
+              });
+            }}
           />
         ))}
       </div>
