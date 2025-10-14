@@ -1,4 +1,4 @@
-export default function KanbanCard({ card, post, onOpen }) {
+export default function KanbanCard({ card, post, onOpen, isSelected, onToggleSelection }) {
   if (!post) return null;
 
   return (
@@ -13,7 +13,18 @@ export default function KanbanCard({ card, post, onOpen }) {
       className="border rounded-lg bg-white p-3 shadow-sm cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow"
       onDoubleClick={() => onOpen(post)}
     >
-      <div className="text-sm font-medium">{post.title}</div>
+      <div className="flex items-center gap-2">
+        <input 
+          type="checkbox" 
+          className="mt-0.5" 
+          checked={isSelected || false}
+          onChange={(e) => {
+            e.stopPropagation();
+            onToggleSelection?.(post.id);
+          }}
+        />
+        <div className="font-medium">{post.title}</div>
+      </div>
       <div className="text-xs text-neutral-500">
         {post.date} • {post.status}
       </div>

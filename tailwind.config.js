@@ -1,11 +1,11 @@
 /** @type {import('tailwindcss').Config} */
-module.exports = {
+export default {
   content: [
     './pages/**/*.{js,jsx}',
     './components/**/*.{js,jsx}',
     './app/**/*.{js,jsx}'
   ],
   plugins: [
-    require('@tailwindcss/forms')
+    (await import('@tailwindcss/forms')).default
   ]
 };

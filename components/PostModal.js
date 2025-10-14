@@ -6,6 +6,12 @@ export default function PostModal({ project, openPost, onClose, onSaved }) {
   const [form, setForm] = useState(null);
   const [role, setRole] = useState(null);
   const [comment, setComment] = useState('');
+  
+  // Histórico do post
+  const [history, setHistory] = useState([]);
+  const [loadingHist, setLoadingHist] = useState(false);
+  const [tab, setTab] = useState('dados');
+  
   const isOpen = !!openPost;
 
   useEffect(() => { 
@@ -40,6 +46,28 @@ export default function PostModal({ project, openPost, onClose, onSaved }) {
       } catch (e) { /* silencioso */ }
     })();
   }, [openPost?.id]);
+
+  // Carregar histórico do post
+  useEffect(() => {
+    if (!openPost?.id || !project?.agency_id) return;
+    (async () => {
+      try {
+        setLoadingHist(true);
+        const sb = supabaseBrowser();
+        const { data, error } = await sb
+          .from('logs')
+          .select('id, action, created_at, actor_user_id, meta')
+          .eq('agency_id', project.agency_id)
+          .eq('entity_type', 'post')
+          .eq('entity_id', openPost.id)
+          .order('created_at', { ascending: false })
+          .limit(50);
+        if (error) throw error;
+        setHistory(data || []);
+      } catch (e) { /* silencioso */ }
+      finally { setLoadingHist(false); }
+    })();
+  }, [openPost?.id, project?.agency_id]);
 
   const canEditFields = useMemo(() => role !== 'client_viewer', [role]);
 
@@ -107,7 +135,29 @@ export default function PostModal({ project, openPost, onClose, onSaved }) {
         </div>
         
         <div className="p-4 space-y-3">
-          <div className="grid grid-cols-2 gap-3">
+          {/* Abas */}
+          <div className="flex gap-2 text-sm mb-2">
+            <button className={`border rounded px-2 py-1 ${tab==='dados'?'bg-neutral-100':''}`} onClick={()=>setTab('dados')}>Dados</button>
+            <button className={`border rounded px-2 py-1 ${tab==='hist'?'bg-neutral-100':''}`} onClick={()=>setTab('hist')}>Histórico</button>
+          </div>
+          
+          {tab === 'hist' ? (
+            <div className="max-h-72 overflow-auto text-sm">
+              {loadingHist && <div className="text-neutral-500">Carregando…</div>}
+              {!loadingHist && !history?.length && <div className="text-neutral-500">Sem eventos.</div>}
+              <ul className="space-y-2">
+                {history?.map(h => (
+                  <li key={h.id} className="border rounded p-2">
+                    <div className="text-xs text-neutral-500">{new Date(h.created_at).toLocaleString()}</div>
+                    <div><b>Ação:</b> {h.action}</div>
+                    {h.meta && <pre className="text-xs bg-neutral-50 p-2 rounded mt-1 overflow-auto">{JSON.stringify(h.meta, null, 2)}</pre>}
+                  </li>
+                ))}
+              </ul>
+            </div>
+          ) : (
+            <>
+              <div className="grid grid-cols-2 gap-3">
             <label className="text-sm">
               <span className="block text-sm font-medium mb-1">Data do post</span>
               <input 
@@ -229,9 +279,11 @@ export default function PostModal({ project, openPost, onClose, onSaved }) {
               </button>
             </div>
           </div>
-          <div className="flex justify-end pt-2">
-            <DeletePostButton postId={form.id} onDeleted={() => { onSaved(); onClose(); }} />
-          </div>
+              <div className="flex justify-end pt-2">
+                <DeletePostButton postId={form.id} onDeleted={() => { onSaved(); onClose(); }} />
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
