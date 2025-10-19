@@ -1,6 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 
-
 if (process.env.NODE_ENV === 'production') {
   console.error('❌ Não rode o seed em produção.');
   process.exit(1);
@@ -9,19 +8,25 @@ if (process.env.NODE_ENV === 'production') {
 const url = NEXT_PUBLIC_SUPABASE_URL;
 const serviceKey = SUPABASE_SERVICE_ROLE_KEY;
 if (!url || !serviceKey) {
-  console.error('❌ Faltam envs: NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY');
+  console.error(
+    '❌ Faltam envs: NEXT_PUBLIC_SUPABASE_URL e SUPABASE_SERVICE_ROLE_KEY'
+  );
   process.exit(1);
 }
 
-const admin = createClient(url, serviceKey, { auth: { persistSession: false } });
+const admin = createClient(url, serviceKey, {
+  auth: { persistSession: false },
+});
 
 async function ensureUser(email, password) {
   // 1) tenta criar
-  const { data: created, error: createErr } = await admin.auth.admin.createUser({
-    email,
-    password,
-    email_confirm: true
-  });
+  const { data: created, error: createErr } = await admin.auth.admin.createUser(
+    {
+      email,
+      password,
+      email_confirm: true,
+    }
+  );
   // se criou agora, ótimo
   if (!createErr && created?.user?.id) {
     return created.user.id;
@@ -35,14 +40,17 @@ async function ensureUser(email, password) {
     throw createErr;
   }
   // 3) buscar o usuário por e-mail (paginando)
-  let page = 1, perPage = 1000, found = null, listed;
+  let page = 1,
+    perPage = 1000,
+    found = null,
+    listed;
   do {
     const { data, error } = await admin.auth.admin.listUsers({ page, perPage });
     if (error) throw error;
     listed = data?.users || [];
     found = listed.find(u => u.email === email) || null;
     page++;
-  } while (!found && (listed?.length === perPage));
+  } while (!found && listed?.length === perPage);
   if (!found?.id) throw new Error('Usuário não encontrado: ' + email);
   // 4) garante senha de demo (útil em DEV)
   try {
@@ -63,11 +71,13 @@ async function main() {
   const { error: eSeed } = await admin.rpc('reset_seed', {
     p_admin_user: adminId,
     p_sm_user: smId,
-    p_client_user: clientId
+    p_client_user: clientId,
   });
   if (eSeed) {
     console.error('❌ reset_seed falhou:', eSeed.message);
-    console.error('Dica: aplique as migrações 002/003/004 ou rode o SQL da função reset_seed primeiro.');
+    console.error(
+      'Dica: aplique as migrações 002/003/004 ou rode o SQL da função reset_seed primeiro.'
+    );
     process.exit(1);
   }
 
@@ -77,7 +87,7 @@ async function main() {
   console.log('   cliente@demo.local / demo1234 (client_viewer)');
 }
 
-main().catch((e) => { 
-  console.error(e); 
-  process.exit(1); 
+main().catch(e => {
+  console.error(e);
+  process.exit(1);
 });

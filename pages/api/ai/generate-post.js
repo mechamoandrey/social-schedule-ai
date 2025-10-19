@@ -1,16 +1,17 @@
 export const config = {
   api: {
     bodyParser: {
-      sizeLimit: '1mb'
-    }
-  }
+      sizeLimit: '1mb',
+    },
+  },
 };
 
 import { PostSchema } from '@/lib/ai/scheduleSchema';
 import { supabaseServer } from '@/lib/supabaseClient';
 
 export default async function handler(req, res) {
-  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
+  if (req.method !== 'POST')
+    return res.status(405).json({ error: 'Method not allowed' });
 
   try {
     const {
@@ -21,12 +22,12 @@ export default async function handler(req, res) {
       holiday,
       tone,
       platforms,
-      model
+      model,
     } = req.body || {};
 
     if (!client_name || !month || !holiday?.date || !holiday?.name) {
       return res.status(400).json({
-        error: 'client_name, month e holiday{date,name} são obrigatórios'
+        error: 'client_name, month e holiday{date,name} são obrigatórios',
       });
     }
 
@@ -56,7 +57,9 @@ export default async function handler(req, res) {
 
         const { data, error } = await supabase
           .from('client_scraped_data')
-          .select('business_type, about, products_or_services, location, target_audience, key_differentials, themes_for_posts')
+          .select(
+            'business_type, about, products_or_services, location, target_audience, key_differentials, themes_for_posts'
+          )
           .eq('client_id', client_id)
           .maybeSingle();
 
@@ -80,7 +83,10 @@ export default async function handler(req, res) {
       `;
 
       if (scraped_data.products_or_services?.length > 0) {
-        scrapedContext += `\n- Produtos/Serviços: ${scraped_data.products_or_services.slice(0, 5).map(p => p.name).join(', ')}`;
+        scrapedContext += `\n- Produtos/Serviços: ${scraped_data.products_or_services
+          .slice(0, 5)
+          .map(p => p.name)
+          .join(', ')}`;
       }
     }
 
@@ -113,60 +119,62 @@ Saída: apenas o JSON do post com {date,title,arte,legenda,cta,status}.`;
 
     const openaiModel = model || process.env.OPENAI_MODEL || 'gpt-4o-mini';
     const apiKey = process.env.OPENAI_API_KEY;
-    if (!apiKey) return res.status(500).json({ error: 'OPENAI_API_KEY não configurada' });
+    if (!apiKey)
+      return res.status(500).json({ error: 'OPENAI_API_KEY não configurada' });
 
     const r = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST', 
-      headers: { 
-        'Content-Type': 'application/json', 
-        'Authorization': `Bearer ${apiKey}` 
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${apiKey}`,
       },
-      body: JSON.stringify({ 
-        model: openaiModel, 
+      body: JSON.stringify({
+        model: openaiModel,
         temperature: 0.6,
-        messages: [ 
-          { role: 'system', content: system }, 
-          { role: 'user', content: user } 
-        ] 
-      })
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: user },
+        ],
+      }),
     });
-    
+
     const data = await r.json();
-    if (!r.ok) return res.status(r.status).json({ 
-      error: data?.error?.message || 'Erro ao chamar OpenAI' 
-    });
+    if (!r.ok)
+      return res.status(r.status).json({
+        error: data?.error?.message || 'Erro ao chamar OpenAI',
+      });
 
     let text = data?.choices?.[0]?.message?.content || '';
-    const match = text.match(/```json\n([\s\S]*?)\n```/); 
+    const match = text.match(/```json\n([\s\S]*?)\n```/);
     if (match) text = match[1];
 
-    let post; 
-    try { 
-      post = JSON.parse(text); 
-    } catch (e) { 
-      return res.status(422).json({ 
-        error: 'Resposta não é JSON válido', 
-        raw: text 
-      }); 
-    }
-    
-    try { 
-      post = PostSchema.parse(post); 
-    } catch (e) { 
-      return res.status(422).json({ 
-        error: 'JSON inválido pelo schema', 
-        details: e.message, 
-        raw: post 
-      }); 
+    let post;
+    try {
+      post = JSON.parse(text);
+    } catch (e) {
+      return res.status(422).json({
+        error: 'Resposta não é JSON válido',
+        raw: text,
+      });
     }
 
-    return res.status(200).json({ 
-      post, 
-      raw: text, 
-      userPrompt: user 
+    try {
+      post = PostSchema.parse(post);
+    } catch (e) {
+      return res.status(422).json({
+        error: 'JSON inválido pelo schema',
+        details: e.message,
+        raw: post,
+      });
+    }
+
+    return res.status(200).json({
+      post,
+      raw: text,
+      userPrompt: user,
     });
-  } catch (e) { 
-    console.error(e); 
-    return res.status(500).json({ error: e.message }); 
+  } catch (e) {
+    console.error(e);
+    return res.status(500).json({ error: e.message });
   }
 }

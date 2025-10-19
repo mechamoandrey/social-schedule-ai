@@ -13,7 +13,9 @@ export function useAiUsage(agencyId) {
     (async () => {
       try {
         setLoading(true);
-        const { data: s, error: e } = await sb.rpc('ai_usage_summary', { p_agency_id: agencyId });
+        const { data: s, error: e } = await sb.rpc('ai_usage_summary', {
+          p_agency_id: agencyId,
+        });
         if (e) throw e;
         if (!mounted) return;
         const row = Array.isArray(s) ? s[0] : s;
@@ -25,7 +27,9 @@ export function useAiUsage(agencyId) {
         if (mounted) setLoading(false);
       }
     })();
-    return () => { mounted = false; };
+    return () => {
+      mounted = false;
+    };
   }, [agencyId]);
 
   const remaining = data?.remaining ?? 0;
@@ -39,5 +43,16 @@ export function useAiUsage(agencyId) {
   if (quota && remaining / quota <= 0.1) level = 'warn';
   if (!overage && !trialEnd && remaining <= 0) level = 'block';
 
-  return { data, loading, error, plan, quota, used, remaining, trialEnd, overage, level };
+  return {
+    data,
+    loading,
+    error,
+    plan,
+    quota,
+    used,
+    remaining,
+    trialEnd,
+    overage,
+    level,
+  };
 }

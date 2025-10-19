@@ -13,10 +13,12 @@ npm run test:api-scraper
 ```
 
 **Pré-requisitos:**
+
 - ✅ Servidor rodando (`npm run dev`)
 - ✅ Banco populado com seed (`npm run dev:seed`)
 
 **O que faz:**
+
 1. Autentica como `admin@agencyx.com`
 2. Busca um cliente de teste no banco
 3. Chama `POST /api/scraper/scrape-website`
@@ -25,6 +27,7 @@ npm run test:api-scraper
 6. Mostra resultado
 
 **Resultado esperado:**
+
 - ✅ Autenticação bem-sucedida
 - ✅ Cliente encontrado via RLS
 - ✅ Scraping executado
@@ -37,12 +40,14 @@ npm run test:api-scraper
 Se preferir testar com curl:
 
 **Passo 1: Pegar access token**
+
 1. Acesse `http://localhost:3000` no navegador
 2. Faça login
 3. Abra DevTools (F12) → Application → Local Storage
 4. Copie o valor de `sb-localhost-auth-token.access_token`
 
 **Passo 2: Executar curl**
+
 ```bash
 curl -X POST http://localhost:3000/api/scraper/scrape-website \
   -H "Content-Type: application/json" \

@@ -67,7 +67,10 @@ export default async function handler(req, res) {
       supabase = supabaseServer(req, res);
     }
 
-    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    const {
+      data: { user },
+      error: authError,
+    } = await supabase.auth.getUser();
 
     if (authError || !user) {
       return res.status(401).json({
@@ -104,7 +107,10 @@ export default async function handler(req, res) {
       return res.status(500).json({
         success: false,
         error: scrapeError.message || 'Erro ao fazer scraping do website',
-        details: process.env.NODE_ENV === 'development' ? scrapeError.stack : undefined,
+        details:
+          process.env.NODE_ENV === 'development'
+            ? scrapeError.stack
+            : undefined,
       });
     }
 
@@ -146,7 +152,9 @@ export default async function handler(req, res) {
 
     const totalDuration = Date.now() - startTime;
 
-    console.log(`[API] ✓ Scraping completed successfully in ${(totalDuration / 1000).toFixed(1)}s`);
+    console.log(
+      `[API] ✓ Scraping completed successfully in ${(totalDuration / 1000).toFixed(1)}s`
+    );
 
     return res.status(200).json({
       success: true,
@@ -157,14 +165,14 @@ export default async function handler(req, res) {
         client_name: client.name,
       },
     });
-
   } catch (error) {
     console.error('[API] Unexpected error:', error);
 
     return res.status(500).json({
       success: false,
       error: 'Erro inesperado ao processar scraping',
-      details: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      details:
+        process.env.NODE_ENV === 'development' ? error.message : undefined,
     });
   }
 }

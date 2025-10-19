@@ -1,20 +1,76 @@
+import * as React from 'react';
+import { AlertCircle, CheckCircle, XCircle } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/Alert';
+import { cn } from '@/lib/utils';
+
 export default function AiUsageBanner({ usage }) {
   if (!usage || usage.loading || !usage.data) return null;
+
   const { plan, used, quota, remaining, trialEnd, overage, level } = usage;
-  const base = 'rounded border p-2 text-sm';
-  const styles = {
-    ok:   base + ' bg-emerald-50 border-emerald-300 text-emerald-900',
-    warn: base + ' bg-amber-50 border-amber-300 text-amber-900',
-    block:base + ' bg-rose-50 border-rose-300 text-rose-900'
+
+  // mapeia o level antigo -> variantes visuais
+  const levelToVariant = {
+    ok: 'success',
+    warn: 'warning',
+    block: 'error',
   };
+
+  const variant = levelToVariant[level] || 'success';
+  const Icon =
+    variant === 'error'
+      ? XCircle
+      : variant === 'warning'
+        ? AlertCircle
+        : CheckCircle;
+
   return (
-    <div className={styles[level]}>
-      <div><b>Plano:</b> {plan || '—'} • <b>Uso IA:</b> {used}/{quota || 0} posts</div>
-      <div className="text-xs mt-1">
-        {trialEnd ? <>Período de teste até <b>{trialEnd.toLocaleDateString()}</b>.</> : null}
-        {!overage && !trialEnd && remaining <= 0 ? <> Sem cota restante — ative excedente ou suba de plano.</> : null}
-        {remaining > 0 && quota && remaining <= Math.max(10, Math.ceil(quota * 0.1)) ? <> Restam <b>{remaining}</b> geração(ões) neste mês.</> : null}
+    <Alert
+      className={cn(
+        'border-l-4',
+        // cores com tokens HSL (usa apenas a borda esquerda)
+        variant === 'success' &&
+          '[border-left-color:hsl(var(--success))] bg-success-light/20',
+        variant === 'warning' &&
+          '[border-left-color:hsl(var(--warning))] bg-warning-light/20',
+        variant === 'error' &&
+          '[border-left-color:hsl(var(--error))] bg-error-light/20'
+      )}
+    >
+      <Icon
+        className={cn(
+          'h-4 w-4',
+          variant === 'success' && 'text-success',
+          variant === 'warning' && 'text-warning',
+          variant === 'error' && 'text-error'
+        )}
+      />
+
+      <div>
+        <div className='text-sm font-medium'>
+          <b>Plano:</b> {plan || '—'} • <b>Uso IA:</b> {used}/{quota || 0} posts
+        </div>
+
+        <AlertDescription className='text-xs mt-1'>
+          {trialEnd ? (
+            <>
+              Período de teste até <b>{trialEnd.toLocaleDateString()}</b>.
+            </>
+          ) : null}
+
+          {!overage && !trialEnd && remaining <= 0 ? (
+            <> Sem cota restante — ative excedente ou suba de plano.</>
+          ) : null}
+
+          {remaining > 0 &&
+          quota &&
+          remaining <= Math.max(10, Math.ceil(quota * 0.1)) ? (
+            <>
+              {' '}
+              Restam <b>{remaining}</b> geração(ões) neste mês.
+            </>
+          ) : null}
+        </AlertDescription>
       </div>
-    </div>
+    </Alert>
   );
 }
