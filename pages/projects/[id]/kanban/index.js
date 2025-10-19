@@ -17,7 +17,16 @@ import StagedDrafts from '@/components/StagedDrafts';
 import EditOnePostModal from '@/components/EditOnePostModal';
 import useKanban from './hooks';
 import { Button } from '@/components/ui/Button';
-import { Sparkles } from 'lucide-react';
+import {
+  Sparkles,
+  Plus,
+  X,
+  Filter,
+  ChevronDown,
+  RotateCcw,
+  ListFilter,
+  Calendar,
+} from 'lucide-react';
 
 export default function ProjectKanban() {
   const {
@@ -47,6 +56,14 @@ export default function ProjectKanban() {
     setOpenPost,
   } = useKanban();
 
+  // Drawer do formulário manual
+  const [manualOpen, setManualOpen] = useState(false);
+
+  // Filtros: estado de abertura e contagem de ativos
+  const [filtersOpen, setFiltersOpen] = useState(true);
+  const activeFiltersCount =
+    (filterStatus ? 1 : 0) + (filterFrom ? 1 : 0) + (filterTo ? 1 : 0);
+
   return (
     <Layout>
       <div className='flex items-center justify-between mb-4'>
@@ -61,8 +78,22 @@ export default function ProjectKanban() {
           </p>
         </div>
 
-        {/* --- IA: Gerar cronograma --- */}
-        <AIGenerator project={project} onInserted={loadAll} />
+        {/* Ações principais */}
+        <div className='flex items-center gap-2'>
+          {/* --- IA: Gerar cronograma --- */}
+          <AIGenerator project={project} onInserted={loadAll} />
+
+          {/* --- Gerar post manualmente (abre drawer) --- */}
+          <Button
+            className='gap-2 font-semibold disabled:opacity-50 disabled:cursor-not-allowed'
+            onClick={() => setManualOpen(true)}
+            variant='secondary'
+            title='Adicionar um post manualmente'
+          >
+            <Plus className='h-4 w-4' />
+            Gerar post manualmente
+          </Button>
+        </div>
       </div>
 
       {/* Aviso de cota de IA */}
@@ -72,47 +103,133 @@ export default function ProjectKanban() {
         </div>
       )}
 
-      {/* Toolbar de filtros */}
-      <div className='mb-4 grid gap-3 md:grid-cols-5'>
-        <div className='md:col-span-2'>
-          <label className='block mb-1.5 text-[11px] font-medium text-muted-foreground'>
-            Status
-          </label>
-          <select
-            className='w-full h-10 rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background bg-white'
-            value={filterStatus}
-            onChange={e => setFilterStatus(e.target.value)}
-          >
-            <option value=''>Todos</option>
-            <option>A criar</option>
-            <option>Em revisão</option>
-            <option>Aprovado</option>
-            <option>Ajustar</option>
-          </select>
+      {/* Toolbar de filtros (com título, contagem, limpar e animação) */}
+      <div className='mb-4 rounded-lg border bg-card shadow-sm'>
+        {/* Header dos filtros */}
+        <div className='flex items-center justify-between px-3 py-2'>
+          <div className='flex items-center gap-2'>
+            <Filter className='h-4 w-4 text-muted-foreground' />
+            <span className='text-sm font-medium'>Filtros de posts</span>
+            {activeFiltersCount > 0 && (
+              <span className='ml-1 rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground'>
+                {activeFiltersCount} ativo(s)
+              </span>
+            )}
+          </div>
+
+          <div className='flex items-center gap-2'>
+            {activeFiltersCount > 0 && (
+              <button
+                type='button'
+                className='inline-flex items-center gap-1 h-8 rounded-md border border-input bg-background px-2 text-xs font-medium shadow-sm hover:bg-accent/50 hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background'
+                onClick={() => {
+                  setFilterStatus('');
+                  setFilterFrom('');
+                  setFilterTo('');
+                }}
+                title='Limpar filtros'
+              >
+                <RotateCcw className='h-3.5 w-3.5' />
+                Limpar
+              </button>
+            )}
+
+            <button
+              type='button'
+              className='inline-flex items-center h-8 rounded-md border border-input bg-background px-2 text-xs font-medium shadow-sm hover:bg-accent/50 hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background'
+              aria-expanded={filtersOpen}
+              onClick={() => setFiltersOpen(o => !o)}
+              title={filtersOpen ? 'Recolher filtros' : 'Expandir filtros'}
+            >
+              <span className='mr-1'>Opções</span>
+              <ChevronDown
+                className={`h-4 w-4 transition-transform ${
+                  filtersOpen ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+          </div>
         </div>
 
-        <div>
-          <label className='block mb-1.5 text-[11px] font-medium text-muted-foreground'>
-            De
-          </label>
-          <input
-            type='date'
-            className='w-full h-10 rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background bg-white'
-            value={filterFrom}
-            onChange={e => setFilterFrom(e.target.value)}
-          />
-        </div>
+        {/* Conteúdo dos filtros com animação */}
+        <div
+          className={`overflow-hidden px-3 transition-all duration-300 ${
+            !filtersOpen
+              ? 'max-h-[500px] opacity-100 pb-3'
+              : 'max-h-0 opacity-0 pb-0'
+          }`}
+        >
+          <div className='grid gap-3 md:grid-cols-5'>
+            {/* STATUS */}
+            <div className='md:col-span-2'>
+              <label className='block mb-1.5 text-[11px] font-medium text-muted-foreground'>
+                Status
+              </label>
+              <div className='relative focus-within:z-50'>
+                <span className='pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground'>
+                  <ListFilter className='h-4 w-4' />
+                </span>
+                <select
+                  className='w-full h-10 rounded-md border border-input bg-background pl-9 pr-8 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background bg-white appearance-none relative z-50'
+                  value={filterStatus}
+                  onChange={e => setFilterStatus(e.target.value)}
+                >
+                  <option value=''>Todos</option>
+                  <option>A criar</option>
+                  <option>Em revisão</option>
+                  <option>Aprovado</option>
+                  <option>Ajustar</option>
+                </select>
+                {/* caret */}
+                <span className='pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground'>
+                  <svg
+                    className='h-4 w-4'
+                    viewBox='0 0 20 20'
+                    fill='currentColor'
+                    aria-hidden='true'
+                  >
+                    <path d='M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z' />
+                  </svg>
+                </span>
+              </div>
+            </div>
 
-        <div>
-          <label className='block mb-1.5 text-[11px] font-medium text-muted-foreground'>
-            Até
-          </label>
-          <input
-            type='date'
-            className='w-full h-10 rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background bg-white'
-            value={filterTo}
-            onChange={e => setFilterTo(e.target.value)}
-          />
+            {/* DE */}
+            <div>
+              <label className='block mb-1.5 text-[11px] font-medium text-muted-foreground'>
+                De
+              </label>
+              <div className='relative focus-within:z-50'>
+                <span className='pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground'>
+                  <Calendar className='h-4 w-4' />
+                </span>
+                <input
+                  type='date'
+                  className='w-full h-10 rounded-md border border-input bg-background pl-9 px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background bg-white'
+                  value={filterFrom}
+                  onChange={e => setFilterFrom(e.target.value)}
+                />
+              </div>
+            </div>
+
+            {/* ATÉ */}
+            <div>
+              <label className='block mb-1.5 text-[11px] font-medium text-muted-foreground'>
+                Até
+              </label>
+              <div className='relative focus-within:z-50'>
+                <span className='pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground'>
+                  <Calendar className='h-4 w-4' />
+                </span>
+                <input
+                  type='date'
+                  className='w-full h-10 rounded-md border border-input bg-background pl-9 px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background bg-white'
+                  value={filterTo}
+                  onChange={e => setFilterTo(e.target.value)}
+                />
+              </div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -300,48 +417,109 @@ export default function ProjectKanban() {
         ))}
       </div>
 
-      <form
-        onSubmit={createPost}
-        className='mt-8 grid md:grid-cols-6 gap-2 mb-6'
-      >
-        <h2 className='text-xl font-semibold mb-2 md:col-span-6 text-center'>
-          Adicionar post manualmente
-        </h2>
-        <input
-          className='border rounded px-3 py-2 bg-white'
-          type='date'
-          placeholder='Data'
-          value={form.date}
-          onChange={e => setForm(f => ({ ...f, date: e.target.value }))}
-        />
-        <input
-          className='bg-white border rounded px-3 py-2 md:col-span-2'
-          placeholder='Título'
-          value={form.title}
-          onChange={e => setForm(f => ({ ...f, title: e.target.value }))}
-        />
-        <input
-          className='bg-white border rounded px-3 py-2'
-          placeholder='Arte (curto)'
-          value={form.arte}
-          onChange={e => setForm(f => ({ ...f, arte: e.target.value }))}
-        />
-        <input
-          className='bg-white border rounded px-3 py-2'
-          placeholder='Legenda (≤500)'
-          value={form.legenda}
-          onChange={e => setForm(f => ({ ...f, legenda: e.target.value }))}
-        />
-        <input
-          className='bg-white border rounded px-3 py-2'
-          placeholder='CTA (≤150)'
-          value={form.cta}
-          onChange={e => setForm(f => ({ ...f, cta: e.target.value }))}
-        />
-        <button className='mt-4 cursor-pointer bg-accent-foreground border rounded-md px-3 py-2 md:col-span-6 hover:opacity-80 text-white'>
-          Adicionar post
-        </button>
-      </form>
+      {/* Drawer lateral: Adicionar post manualmente */}
+      {manualOpen && (
+        <div className='fixed inset-0 z-50'>
+          {/* overlay */}
+          <div
+            className='absolute inset-0 bg-black/40'
+            onClick={() => setManualOpen(false)}
+          />
+          {/* painel lateral */}
+          <div className='absolute right-0 top-0 h-full w-full max-w-md bg-white shadow-xl border-l flex flex-col'>
+            {/* header */}
+            <div className='px-4 py-3 border-b flex items-center justify-between'>
+              <h3 className='font-semibold'>Adicionar post manualmente</h3>
+              <button
+                className='inline-flex h-8 w-8 items-center justify-center rounded-md border border-input hover:bg-accent/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background'
+                onClick={() => setManualOpen(false)}
+                aria-label='Fechar'
+                title='Fechar'
+              >
+                <X className='h-4 w-4' />
+              </button>
+            </div>
+
+            {/* conteúdo scrollável */}
+            <div className='flex-1 overflow-y-auto p-4'>
+              <form onSubmit={createPost} className='grid grid-cols-1 gap-3'>
+                <label className='text-sm'>
+                  <span className='block text-sm font-medium mb-1'>Data</span>
+                  <input
+                    className='w-full h-10 rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background bg-white'
+                    type='date'
+                    placeholder='Data'
+                    value={form.date}
+                    onChange={e =>
+                      setForm(f => ({ ...f, date: e.target.value }))
+                    }
+                  />
+                </label>
+
+                <label className='text-sm'>
+                  <span className='block text-sm font-medium mb-1'>Título</span>
+                  <input
+                    className='w-full h-10 rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background bg-white'
+                    placeholder='Título'
+                    value={form.title}
+                    onChange={e =>
+                      setForm(f => ({ ...f, title: e.target.value }))
+                    }
+                  />
+                </label>
+
+                <label className='text-sm'>
+                  <span className='block text-sm font-medium mb-1'>
+                    Arte (curto)
+                  </span>
+                  <input
+                    className='w-full h-10 rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background bg-white'
+                    placeholder='Arte (curto)'
+                    value={form.arte}
+                    onChange={e =>
+                      setForm(f => ({ ...f, arte: e.target.value }))
+                    }
+                  />
+                </label>
+
+                <label className='text-sm'>
+                  <span className='block text-sm font-medium mb-1'>
+                    Legenda (≤500)
+                  </span>
+                  <input
+                    className='w-full h-10 rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background bg-white'
+                    placeholder='Legenda (≤500)'
+                    value={form.legenda}
+                    onChange={e =>
+                      setForm(f => ({ ...f, legenda: e.target.value }))
+                    }
+                  />
+                </label>
+
+                <label className='text-sm'>
+                  <span className='block text-sm font-medium mb-1'>
+                    CTA (≤150)
+                  </span>
+                  <input
+                    className='w-full h-10 rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background bg-white'
+                    placeholder='CTA (≤150)'
+                    value={form.cta}
+                    onChange={e =>
+                      setForm(f => ({ ...f, cta: e.target.value }))
+                    }
+                  />
+                </label>
+
+                <div className='pt-2'>
+                  <button className='w-full cursor-pointer bg-accent-foreground border rounded-md px-3 py-2 text-white hover:opacity-80'>
+                    Adicionar post
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
 
       {err && <p className='text-red-600 text-sm mb-4'>{err}</p>}
 
@@ -527,72 +705,87 @@ function AIGenerator({ project, onInserted }) {
       </Button>
 
       {open && (
-        <div className='fixed inset-0 bg-black/40 grid place-items-center p-4 z-50'>
-          <div className='bg-white w-full max-w-3xl rounded-xl shadow-lg overflow-hidden max-h-[90vh] flex flex-col'>
-            <div className='px-4 py-3 border-b flex items-center justify-between'>
-              <h3 className='font-semibold'>Gerar cronograma (IA)</h3>
-              {!usage?.loading && (
-                <div className='mb-2'>
-                  <AiUsageBanner usage={usage} />
-                </div>
-              )}
+        <div className='fixed inset-0 bg-black/40 z-50 p-4 grid place-items-center'>
+          <div className='bg-card w-full max-w-3xl rounded-xl border shadow-lg overflow-hidden flex flex-col max-h-[90vh]'>
+            {/* Header fixo */}
+            <div className='sticky top-0 z-10 bg-card border-b px-4 py-3 flex items-center justify-between'>
+              <div className='min-w-0'>
+                <h3 className='font-semibold text-sm md:text-base truncate'>
+                  Gerar cronograma (IA)
+                </h3>
+              </div>
               <div className='flex items-center gap-2'>
-                <Link href='/help/cronogramas' className='text-sm underline'>
+                <Link
+                  href='/help/cronogramas'
+                  className='text-xs underline text-muted-foreground hover:text-foreground'
+                >
                   Ajuda
                 </Link>
                 <button
                   onClick={() => setOpen(false)}
-                  className='text-sm px-2 py-1 rounded border hover:bg-neutral-50'
+                  className='inline-flex items-center h-9 rounded-md border border-input bg-background px-3 text-xs font-medium shadow-sm transition-colors hover:bg-accent/50 hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background'
                 >
                   Fechar
                 </button>
               </div>
             </div>
 
-            <div className='p-4 overflow-y-auto space-y-4'>
+            {/* Corpo rolável */}
+            <div className='flex-1 overflow-y-auto p-4 space-y-4'>
+              {/* Banner de uso IA (fora do header para não “crescer” o topo) */}
+              {!usage?.loading && (
+                <div className='mb-1'>
+                  <AiUsageBanner usage={usage} />
+                </div>
+              )}
+
+              {/* Formulário */}
               <form onSubmit={callAI} className='grid md:grid-cols-2 gap-3'>
                 <label className='text-sm'>
                   <span className='block text-sm font-medium mb-1'>
                     Nome do cliente
                   </span>
                   <input
-                    className='border rounded px-3 py-2 w-full'
+                    className='w-full h-10 rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background bg-white'
                     value={form.client_name}
                     onChange={e =>
                       setForm(f => ({ ...f, client_name: e.target.value }))
                     }
                   />
                 </label>
+
                 <label className='text-sm'>
                   <span className='block text-sm font-medium mb-1'>
                     Site do cliente (opcional)
                   </span>
                   <input
-                    className='border rounded px-3 py-2 w-full'
+                    className='w-full h-10 rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background bg-white'
                     value={form.client_website}
                     onChange={e =>
                       setForm(f => ({ ...f, client_website: e.target.value }))
                     }
                   />
                 </label>
+
                 <label className='text-sm'>
                   <span className='block text-sm font-medium mb-1'>
                     Mês (YYYY-MM)
                   </span>
                   <input
-                    className='border rounded px-3 py-2 w-full'
+                    className='w-full h-10 rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background bg-white'
                     value={form.month}
                     onChange={e =>
                       setForm(f => ({ ...f, month: e.target.value }))
                     }
                   />
                 </label>
+
                 <label className='text-sm'>
                   <span className='block text-sm font-medium mb-1'>
                     Frequência por semana
                   </span>
                   <input
-                    className='border rounded px-3 py-2 w-full'
+                    className='w-full h-10 rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background bg-white'
                     type='number'
                     value={form.freq_per_week}
                     onChange={e =>
@@ -603,88 +796,99 @@ function AIGenerator({ project, onInserted }) {
                     }
                   />
                 </label>
+
                 <label className='text-sm'>
                   <span className='block text-sm font-medium mb-1'>
                     Tipos (Produto, Dica, Institucional, Campanha)
                   </span>
                   <input
-                    className='border rounded px-3 py-2 w-full'
+                    className='w-full h-10 rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background bg-white'
                     value={form.types}
                     onChange={e =>
                       setForm(f => ({ ...f, types: e.target.value }))
                     }
                   />
                 </label>
+
                 <label className='text-sm'>
                   <span className='block text-sm font-medium mb-1'>
                     Plataformas (ex.: Instagram)
                   </span>
                   <input
-                    className='border rounded px-3 py-2 w-full'
+                    className='w-full h-10 rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background bg-white'
                     value={form.platforms}
                     onChange={e =>
                       setForm(f => ({ ...f, platforms: e.target.value }))
                     }
                   />
                 </label>
+
                 <label className='text-sm'>
                   <span className='block text-sm font-medium mb-1'>
                     Tom de voz
                   </span>
                   <input
-                    className='border rounded px-3 py-2 w-full'
+                    className='w-full h-10 rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background bg-white'
                     value={form.tone}
                     onChange={e =>
                       setForm(f => ({ ...f, tone: e.target.value }))
                     }
                   />
                 </label>
+
                 <label className='text-sm'>
                   <span className='block text-sm font-medium mb-1'>
                     Modelo (opcional, ex.: gpt-4o-mini)
                   </span>
                   <input
-                    className='border rounded px-3 py-2 w-full'
+                    className='w-full h-10 rounded-md border border-input bg-background px-3 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background bg-white'
                     value={form.model}
                     onChange={e =>
                       setForm(f => ({ ...f, model: e.target.value }))
                     }
                   />
                 </label>
+
                 <label className='text-sm md:col-span-2'>
                   <span className='block text-sm font-medium mb-1'>
                     Catálogo de produtos (bullets ou JSON)
                   </span>
                   <textarea
-                    className='border rounded px-3 py-2 w-full'
+                    className='w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background'
                     rows='3'
-                    placeholder='Ex.:\n- Produto A (Marca X)\n- Produto B (Marca Y)'
+                    placeholder={
+                      'Ex.: \n- Produto A (Marca X)\n- Produto B (Marca Y)'
+                    }
                     value={form.product_list}
                     onChange={e =>
                       setForm(f => ({ ...f, product_list: e.target.value }))
                     }
                   />
                 </label>
+
                 <label className='text-sm md:col-span-2'>
                   <span className='block text-sm font-medium mb-1'>
                     Plano preferencial de temas (um por linha)
                   </span>
                   <textarea
-                    className='border rounded px-3 py-2 w-full'
+                    className='w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background'
                     rows='3'
-                    placeholder='Ex.:\n1) Campanha Outubro Rosa\n2) Dica: Drywall (ST/RU/RF)'
+                    placeholder={
+                      'Ex.: \n1) Campanha Outubro Rosa\n2) Dica: Drywall (ST/RU/RF)'
+                    }
                     value={form.post_plan_list}
                     onChange={e =>
                       setForm(f => ({ ...f, post_plan_list: e.target.value }))
                     }
                   />
                 </label>
+
                 <label className='text-sm md:col-span-2'>
                   <span className='block text-sm font-medium mb-1'>
                     approved_holidays (JSON array de {'{date,name}'})
                   </span>
                   <textarea
-                    className='border rounded px-3 py-2 w-full'
+                    className='w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background'
                     rows='3'
                     placeholder={`Ex.:\n[{"date":"2025-10-12","name":"Dia das Crianças / Nossa Senhora Aparecida"}]`}
                     value={JSON.stringify(form.approved_holidays)}
@@ -696,22 +900,25 @@ function AIGenerator({ project, onInserted }) {
                     }}
                   />
                 </label>
-                <p className='text-xs text-neutral-600 md:col-span-2'>
+
+                <p className='text-xs text-muted-foreground md:col-span-2'>
                   A IA sempre sugerirá feriados no campo{' '}
                   <code>suggested_holidays</code> da pré-visualização. Eles não
                   são agendados automaticamente.
                 </p>
+
                 <div className='md:col-span-2 flex gap-2'>
                   <button
+                    type='submit'
                     disabled={loading}
-                    className='border rounded px-3 py-2 hover:bg-neutral-50 disabled:opacity-50'
+                    className='inline-flex items-center h-10 rounded-md border border-input bg-background px-3 text-sm font-medium shadow-sm transition-colors hover:bg-accent/50 hover:text-accent-foreground disabled:opacity-50 disabled:cursor-not-allowed focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background'
                   >
                     {loading ? 'Gerando…' : 'Gerar cronograma'}
                   </button>
                 </div>
               </form>
 
-              {error && <p className='text-red-600 text-sm'>{error}</p>}
+              {error && <p className='text-error text-sm'>{error}</p>}
 
               {preview && (
                 <div className='space-y-4'>
@@ -844,7 +1051,7 @@ function AIGenerator({ project, onInserted }) {
 
                   <button
                     onClick={insertPosts}
-                    className='border rounded px-3 py-2 hover:bg-neutral-50'
+                    className='inline-flex items-center h-10 rounded-md border border-input bg-background px-3 text-sm font-medium shadow-sm transition-colors hover:bg-accent/50 hover:text-accent-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background'
                   >
                     Inserir posts no projeto
                   </button>
@@ -861,109 +1068,6 @@ function AIGenerator({ project, onInserted }) {
           </div>
         </div>
       )}
-
-      {/* Rascunhos locais */}
-      {preview && (
-        <div className='mt-4'>
-          <StagedDrafts
-            items={staged}
-            onEdit={i => {
-              const p = staged[i];
-              setReviewPost({ ...p, __origin: 'staged', __stagedIndex: i });
-              setReviewOpen(true);
-            }}
-            onInsert={async i => {
-              try {
-                const p = staged[i];
-                const row = {
-                  project_id: project.id,
-                  date: p.date,
-                  title: p.title,
-                  arte: p.arte,
-                  legenda: p.legenda,
-                  cta: p.cta || null,
-                  status: 'A criar',
-                };
-                const { error } = await sb.from('posts').insert(row);
-                if (error) throw error;
-                setStaged(list => list.filter((_, idx) => idx !== i));
-                onInserted && onInserted();
-                alert('Rascunho inserido com sucesso.');
-              } catch (e) {
-                alert(e.message);
-              }
-            }}
-            onRemove={i =>
-              setStaged(list => list.filter((_, idx) => idx !== i))
-            }
-          />
-        </div>
-      )}
-
-      {/* Modal de revisão/edição antes de inserir */}
-      <EditOnePostModal
-        open={reviewOpen}
-        initialPost={reviewPost}
-        onCancel={() => {
-          setReviewOpen(false);
-          setReviewPost(null);
-        }}
-        onInsert={async edited => {
-          try {
-            const row = {
-              project_id: project.id,
-              date: edited.date,
-              title: edited.title,
-              arte: edited.arte,
-              legenda: edited.legenda,
-              cta: edited.cta || null,
-              status: 'A criar',
-            };
-            const { error } = await sb.from('posts').insert(row);
-            if (error) throw error;
-            setReviewOpen(false);
-            setReviewPost(null);
-            onInserted && onInserted();
-            alert('Post inserido com sucesso.');
-          } catch (e) {
-            alert(e.message);
-          }
-        }}
-        onSavePreview={edited => {
-          // limpar metadados
-          const origin = edited.__origin;
-          const idx = edited.__index;
-          const clean = {
-            date: edited.date,
-            title: edited.title,
-            arte: edited.arte,
-            legenda: edited.legenda,
-            cta: edited.cta || null,
-            status: edited.status || 'A criar',
-          };
-
-          if (origin === 'preview' && typeof idx === 'number') {
-            // atualizar o próprio preview
-            const next = {
-              ...(preview || {}),
-              posts: [...(preview?.posts || [])],
-            };
-            next.posts[idx] = clean;
-            setPreview(next);
-          } else if (origin === 'staged') {
-            // adicionar/atualizar rascunho
-            if (typeof edited.__stagedIndex === 'number') {
-              const list = [...staged];
-              list[edited.__stagedIndex] = clean;
-              setStaged(list);
-            } else {
-              setStaged(list => [...list, clean]);
-            }
-          }
-          setReviewOpen(false);
-          setReviewPost(null);
-        }}
-      />
     </div>
   );
 }
