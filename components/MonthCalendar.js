@@ -2,7 +2,8 @@ import { useMemo } from 'react';
 
 function daysInMonth(yyyyMM) {
   const [y, m] = yyyyMM.split('-').map(Number); // m = 1..12
-  const year = y, monthIdx = m - 1;
+  const year = y,
+    monthIdx = m - 1;
   const first = new Date(year, monthIdx, 1);
   const last = new Date(year, monthIdx + 1, 0);
   const startWeekday = first.getDay(); // 0=Sun
@@ -23,7 +24,7 @@ export default function MonthCalendar({
   holidays = [], // [{date,name, approved?:boolean}]
   onDropPost, // (postId, newDate) => void
   onAddPost, // (date) => void
-  onOpenPost // (post) => void
+  onOpenPost, // (post) => void
 }) {
   const cells = useMemo(() => daysInMonth(month), [month]);
   const postByDate = useMemo(() => {
@@ -38,7 +39,9 @@ export default function MonthCalendar({
   }, [posts]);
   const holidayByDate = useMemo(() => {
     const map = new Map();
-    holidays.forEach(h => { if (h?.date) map.set(h.date, h); });
+    holidays.forEach(h => {
+      if (h?.date) map.set(h.date, h);
+    });
     return map;
   }, [holidays]);
 
@@ -52,45 +55,80 @@ export default function MonthCalendar({
   }
 
   return (
-    <div className="w-full">
+    <div className='w-full'>
       {/* Cabeçalho dias da semana */}
-      <div className="grid grid-cols-7 gap-[1px] bg-neutral-200 text-xs">
+      <div className='grid grid-cols-7 gap-[1px] bg-neutral-200 text-xs'>
         {WEEKDAYS.map(d => (
-          <div key={d} className="bg-neutral-50 px-2 py-2 font-medium text-center">{d}</div>
+          <div
+            key={d}
+            className='bg-neutral-50 px-2 py-2 font-medium text-center'
+          >
+            {d}
+          </div>
         ))}
       </div>
       {/* Células do mês */}
-      <div className="grid grid-cols-7 gap-[1px] bg-neutral-200">
+      <div className='grid grid-cols-7 gap-[1px] bg-neutral-200'>
         {cells.map((d, idx) => {
           const dateStr = d ? d.toISOString().slice(0, 10) : null;
-          const dayPosts = dateStr ? (postByDate.get(dateStr) || []) : [];
+          const dayPosts = dateStr ? postByDate.get(dateStr) || [] : [];
           const hol = dateStr ? holidayByDate.get(dateStr) : null;
           const conflict = dayPosts.length >= 3;
           return (
-            <div key={idx}
+            <div
+              key={idx}
               onDragOver={ev => ev.preventDefault()}
-              onDrop={ev => { if (dateStr) onDrop(ev, dateStr); }}
-              className={'min-h-[115px] bg-white p-2 flex flex-col ' + (hol ? 'ring-1 ring-rose-300' : '')}
+              onDrop={ev => {
+                if (dateStr) onDrop(ev, dateStr);
+              }}
+              className={
+                'min-h-[115px] bg-white p-2 flex flex-col ' +
+                (hol ? 'ring-1 ring-rose-300' : '')
+              }
             >
-              <div className="flex items-center justify-between">
-                <div className="text-xs text-neutral-500">{d ? d.getDate() : ''}</div>
-                <div className="flex items-center gap-1">
-                  {hol && <span className="text-[10px] px-1 py-0.5 rounded bg-rose-50 text-rose-700">{hol.approved ? 'Feriado (aprovado)' : 'Feriado'}</span>}
-                  {conflict && <span className="text-[10px] px-1 py-0.5 rounded bg-amber-50 text-amber-700">+{dayPosts.length}</span>}
-                  {dateStr && <button onClick={() => onAddPost && onAddPost(dateStr)} className="text-xs border rounded px-1.5 py-0.5 hover:bg-neutral-50">+ Post</button>}
+              <div className='flex items-center justify-between'>
+                <div className='text-xs text-neutral-500'>
+                  {d ? d.getDate() : ''}
+                </div>
+                <div className='flex items-center gap-1'>
+                  {hol && (
+                    <span className='text-[10px] px-1 py-0.5 rounded bg-rose-50 text-rose-700'>
+                      {hol.approved ? 'Feriado (aprovado)' : 'Feriado'}
+                    </span>
+                  )}
+                  {conflict && (
+                    <span className='text-[10px] px-1 py-0.5 rounded bg-amber-50 text-amber-700'>
+                      +{dayPosts.length}
+                    </span>
+                  )}
+                  {dateStr && (
+                    <button
+                      onClick={() => onAddPost && onAddPost(dateStr)}
+                      className='text-xs border rounded px-1.5 py-0.5 hover:bg-neutral-50'
+                    >
+                      + Post
+                    </button>
+                  )}
                 </div>
               </div>
-              <div className="mt-1 space-y-1">
+              <div className='mt-1 space-y-1'>
                 {dayPosts.map(p => (
-                  <div key={p.id}
+                  <div
+                    key={p.id}
                     draggable
                     onDragStart={ev => onDragStart(ev, p)}
                     onDoubleClick={() => onOpenPost && onOpenPost(p)}
                     title={p.title}
-                    className="text-[11px] border rounded px-2 py-1 flex items-center justify-between gap-2 hover:bg-neutral-50 cursor-grab"
+                    className='text-[11px] border rounded px-2 py-1 flex items-center justify-between gap-2 hover:bg-neutral-50 cursor-grab'
                   >
-                    <span className="truncate">{p.title}</span>
-                    <span className={'text-[10px] px-1 rounded ' + badgeForStatus(p.status)}>{p.status}</span>
+                    <span className='truncate'>{p.title}</span>
+                    <span
+                      className={
+                        'text-[10px] px-1 rounded ' + badgeForStatus(p.status)
+                      }
+                    >
+                      {p.status}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -104,10 +142,15 @@ export default function MonthCalendar({
 
 function badgeForStatus(s) {
   switch ((s || '').toLowerCase()) {
-    case 'a criar': return 'bg-neutral-100';
-    case 'em revisão': return 'bg-blue-100';
-    case 'aprovado': return 'bg-emerald-100';
-    case 'ajustar': return 'bg-amber-100';
-    default: return 'bg-neutral-100';
+    case 'a criar':
+      return 'bg-neutral-100';
+    case 'em revisão':
+      return 'bg-blue-100';
+    case 'aprovado':
+      return 'bg-emerald-100';
+    case 'ajustar':
+      return 'bg-amber-100';
+    default:
+      return 'bg-neutral-100';
   }
 }

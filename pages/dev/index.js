@@ -7,9 +7,24 @@ import { useAiUsage } from '@/hooks/useAiUsage';
 import AiUsageBanner from '@/components/AiUsageBanner';
 
 const DEMO = [
-  { role: 'agency_admin',  email: 'admin@demo.local',   password: 'demo1234', label: 'Admin' },
-  { role: 'social_media',  email: 'sm@demo.local',      password: 'demo1234', label: 'Social Media' },
-  { role: 'client_viewer', email: 'cliente@demo.local', password: 'demo1234', label: 'Cliente' },
+  {
+    role: 'agency_admin',
+    email: 'admin@demo.local',
+    password: 'demo1234',
+    label: 'Admin',
+  },
+  {
+    role: 'social_media',
+    email: 'sm@demo.local',
+    password: 'demo1234',
+    label: 'Social Media',
+  },
+  {
+    role: 'client_viewer',
+    email: 'cliente@demo.local',
+    password: 'demo1234',
+    label: 'Cliente',
+  },
 ];
 
 export default function DevHub() {
@@ -17,8 +32,11 @@ export default function DevHub() {
   const [projects, setProjects] = useState([]);
   const [selected, setSelected] = useState('');
   const [reviewLinks, setReviewLinks] = useState([]);
-const selectedProject = useMemo(() => projects.find(p => p.id === selected) || null, [projects, selected]);
-const usage = useAiUsage(selectedProject?.agency_id);
+  const selectedProject = useMemo(
+    () => projects.find(p => p.id === selected) || null,
+    [projects, selected]
+  );
+  const usage = useAiUsage(selectedProject?.agency_id);
   const [creating, setCreating] = useState(false);
   const [err, setErr] = useState('');
 
@@ -142,19 +160,19 @@ const usage = useAiUsage(selectedProject?.agency_id);
 
   return (
     <Layout>
-      <div className="mb-4 rounded border p-3 bg-amber-50 text-amber-900 text-sm">
-        <div className="font-medium">Ambiente de desenvolvimento</div>
+      <div className='mb-4 rounded border p-3 bg-amber-50 text-amber-900 text-sm'>
+        <div className='font-medium'>Ambiente de desenvolvimento</div>
         <div>Use apenas localmente. Em produção, desabilite esta página.</div>
       </div>
 
-      <h1 className="text-xl font-semibold mb-3">DEV Hub</h1>
-      {err && <div className="text-red-600 text-sm mb-3">{err}</div>}
+      <h1 className='text-xl font-semibold mb-3'>DEV Hub</h1>
+      {err && <div className='text-red-600 text-sm mb-3'>{err}</div>}
 
-      <div className="grid md:grid-cols-3 gap-4">
+      <div className='grid md:grid-cols-3 gap-4'>
         {/* Coluna 1: Login rápido / Sessão */}
-        <section className="border rounded p-3 bg-white">
-          <div className="text-sm font-medium mb-2">Sessão atual</div>
-          <div className="text-xs text-neutral-600 break-all">
+        <section className='border rounded p-3 bg-white'>
+          <div className='text-sm font-medium mb-2'>Sessão atual</div>
+          <div className='text-xs text-neutral-600 break-all'>
             {me ? (
               <>
                 <div>
@@ -169,114 +187,140 @@ const usage = useAiUsage(selectedProject?.agency_id);
             )}
           </div>
 
-          <div className="mt-3 text-sm font-medium mb-2">Login rápido (DEV)</div>
-          <div className="flex flex-col gap-2">
-            {DEMO.map((d) => (
+          <div className='mt-3 text-sm font-medium mb-2'>
+            Login rápido (DEV)
+          </div>
+          <div className='flex flex-col gap-2'>
+            {DEMO.map(d => (
               <button
                 key={d.email}
                 onClick={() => quickLogin(d.email, d.password)}
-                className="text-xs border rounded px-2 py-1"
+                className='text-xs border rounded px-2 py-1'
               >
                 Entrar como {d.label}
               </button>
             ))}
-            <button onClick={signOut} className="text-xs border rounded px-2 py-1">
+            <button
+              onClick={signOut}
+              className='text-xs border rounded px-2 py-1'
+            >
               Sair
             </button>
           </div>
         </section>
 
         {/* Coluna 2: Projetos & ações */}
-        <section className="border rounded p-3 bg-white">
-          <div className="text-sm font-medium mb-2">Projetos acessíveis</div>
+        <section className='border rounded p-3 bg-white'>
+          <div className='text-sm font-medium mb-2'>Projetos acessíveis</div>
           <select
-            className="border rounded px-2 py-1 text-sm w-full"
+            className='border rounded px-2 py-1 text-sm w-full'
             value={selected}
-            onChange={(e) => setSelected(e.target.value)}
+            onChange={e => setSelected(e.target.value)}
           >
-            {!projects?.length && <option value="">Nenhum projeto</option>}
-            {projects.map((p) => (
+            {!projects?.length && <option value=''>Nenhum projeto</option>}
+            {projects.map(p => (
               <option key={p.id} value={p.id}>
                 {p.name} — {p.clients?.name || 'Cliente'} ({p.month})
               </option>
             ))}
           </select>
 
-          <div className="mt-2 text-xs text-neutral-700">
-  {selectedProject ? (
-    <>Plano IA: <b>{usage?.data?.plan_name || '—'}</b> • Uso: <b>{usage?.used ?? 0}/{usage?.quota ?? 0}</b> {usage?.level === 'warn' ? '(atenção)' : usage?.level === 'block' ? '(bloqueado)' : ''}</>
-  ) : (
-    <>Selecione um projeto para ver a cota de IA.</>
-  )}
-</div>
-<div className="mt-3 flex flex-wrap gap-2">
+          <div className='mt-2 text-xs text-neutral-700'>
+            {selectedProject ? (
+              <>
+                Plano IA: <b>{usage?.data?.plan_name || '—'}</b> • Uso:{' '}
+                <b>
+                  {usage?.used ?? 0}/{usage?.quota ?? 0}
+                </b>{' '}
+                {usage?.level === 'warn'
+                  ? '(atenção)'
+                  : usage?.level === 'block'
+                    ? '(bloqueado)'
+                    : ''}
+              </>
+            ) : (
+              <>Selecione um projeto para ver a cota de IA.</>
+            )}
+          </div>
+          <div className='mt-3 flex flex-wrap gap-2'>
             {selected && (
               <>
-                <Link href={`/projects/${selected}/kanban`} className="text-xs border rounded px-2 py-1">
+                <Link
+                  href={`/projects/${selected}/kanban`}
+                  className='text-xs border rounded px-2 py-1'
+                >
                   Abrir Kanban
                 </Link>
-                <Link href={`/projects/${selected}/calendar`} className="text-xs border rounded px-2 py-1">
+                <Link
+                  href={`/projects/${selected}/calendar`}
+                  className='text-xs border rounded px-2 py-1'
+                >
                   Calendário
                 </Link>
               </>
             )}
-            <Link href="/projects" className="text-xs border rounded px-2 py-1">
+            <Link href='/projects' className='text-xs border rounded px-2 py-1'>
               Listar Projetos
             </Link>
-            <Link href="/agency/members" className="text-xs border rounded px-2 py-1">
+            <Link
+              href='/agency/members'
+              className='text-xs border rounded px-2 py-1'
+            >
               Membros & Convites
             </Link>
           </div>
 
           {!usage?.loading && usage?.data ? (
-  <div className="mt-4">
-    <AiUsageBanner usage={usage} />
-  </div>
-) : null}
+            <div className='mt-4'>
+              <AiUsageBanner usage={usage} />
+            </div>
+          ) : null}
 
-<div className="mt-4 text-sm font-medium mb-1">Link público de revisão</div>
-          <div className="flex items-center gap-2">
+          <div className='mt-4 text-sm font-medium mb-1'>
+            Link público de revisão
+          </div>
+          <div className='flex items-center gap-2'>
             <button
               disabled={!selected || creating}
               onClick={createReviewLink}
-              className="text-xs border rounded px-2 py-1"
+              className='text-xs border rounded px-2 py-1'
             >
               Gerar link (14 dias)
             </button>
             {latestReviewPath && (
               <a
                 href={latestReviewPath}
-                target="_blank"
-                rel="noreferrer"
-                className="text-xs border rounded px-2 py-1"
+                target='_blank'
+                rel='noreferrer'
+                className='text-xs border rounded px-2 py-1'
               >
                 Abrir último link
               </a>
             )}
           </div>
 
-          <div className="mt-2 text-xs text-neutral-600">
+          <div className='mt-2 text-xs text-neutral-600'>
             Últimos links do projeto selecionado (5):
           </div>
-          <ul className="mt-1 space-y-2 text-xs">
-            {reviewLinks?.map((rl) => (
-              <li key={rl.id} className="border rounded p-2">
-                <div className="flex justify-between gap-2">
+          <ul className='mt-1 space-y-2 text-xs'>
+            {reviewLinks?.map(rl => (
+              <li key={rl.id} className='border rounded p-2'>
+                <div className='flex justify-between gap-2'>
                   <div>Expira: {new Date(rl.expires_at).toLocaleString()}</div>
                   <div>{rl.disabled ? 'DESATIVADO' : 'Ativo'}</div>
                 </div>
-                <div className="mt-1 break-all">/review/{rl.token}</div>
-                <div className="mt-2 flex gap-2">
+                <div className='mt-1 break-all'>/review/{rl.token}</div>
+                <div className='mt-2 flex gap-2'>
                   <a
-                    className="text-xs border rounded px-2 py-1"
+                    className='text-xs border rounded px-2 py-1'
                     href={`/review/${rl.token}`}
-                    target="_blank"
-                    rel="noreferrer"
+                    target='_blank'
+                    rel='noreferrer'
                   >
                     Abrir
                   </a>
                   <button
-                    className="text-xs border rounded px-2 py-1"
+                    className='text-xs border rounded px-2 py-1'
                     onClick={async () => {
                       await navigator.clipboard.writeText(
                         `${window.location.origin}/review/${rl.token}`
@@ -290,95 +334,124 @@ const usage = useAiUsage(selectedProject?.agency_id);
               </li>
             ))}
             {!reviewLinks?.length && (
-              <li className="text-neutral-500">Nenhum link recente (gere um acima).</li>
+              <li className='text-neutral-500'>
+                Nenhum link recente (gere um acima).
+              </li>
             )}
           </ul>
         </section>
 
         {/* Coluna 3: Manuais por perfil */}
-        <section className="border rounded p-3 bg-white">
-          <div className="text-sm font-medium mb-2">Manuais rápidos (atalhos)</div>
+        <section className='border rounded p-3 bg-white'>
+          <div className='text-sm font-medium mb-2'>
+            Manuais rápidos (atalhos)
+          </div>
 
-          <details className="mb-2">
-            <summary className="cursor-pointer font-medium text-sm">
+          <details className='mb-2'>
+            <summary className='cursor-pointer font-medium text-sm'>
               Admin (agency_admin)
             </summary>
-            <ul className="list-disc ml-5 text-xs mt-1 space-y-1">
+            <ul className='list-disc ml-5 text-xs mt-1 space-y-1'>
               <li>
-                <Link className="underline" href="/projects">
+                <Link className='underline' href='/projects'>
                   Abrir lista de projetos
                 </Link>{' '}
                 e entrar no projeto → Kanban.
               </li>
               {selected && (
                 <li>
-                  <Link className="underline" href={`/projects/${selected}/kanban`}>
+                  <Link
+                    className='underline'
+                    href={`/projects/${selected}/kanban`}
+                  >
                     Abrir Kanban do projeto selecionado
                   </Link>
                 </li>
               )}
               <li>
-                <Link className="underline" href="/agency/members">
+                <Link className='underline' href='/agency/members'>
                   Membros & Convites
                 </Link>{' '}
                 para convidar usuários.
               </li>
               <li>
-                Gerar link de revisão aqui no DEV Hub ou no Kanban (botão “Gerar link de
-                revisão”).
+                Gerar link de revisão aqui no DEV Hub ou no Kanban (botão “Gerar
+                link de revisão”).
               </li>
               {latestReviewPath ? (
                 <li>
-                  <a className="underline" href={latestReviewPath} target="_blank" rel="noreferrer">
+                  <a
+                    className='underline'
+                    href={latestReviewPath}
+                    target='_blank'
+                    rel='noreferrer'
+                  >
                     Abrir último link público do projeto
                   </a>{' '}
                   (vista do cliente)
                 </li>
               ) : (
-                <li className="text-neutral-500">
+                <li className='text-neutral-500'>
                   Sem link público ainda — gere um com o botão acima.
                 </li>
               )}
             </ul>
           </details>
 
-          <details className="mb-2">
-            <summary className="cursor-pointer font-medium text-sm">Social Media</summary>
-            <ul className="list-disc ml-5 text-xs mt-1 space-y-1">
+          <details className='mb-2'>
+            <summary className='cursor-pointer font-medium text-sm'>
+              Social Media
+            </summary>
+            <ul className='list-disc ml-5 text-xs mt-1 space-y-1'>
               {selected && (
                 <li>
-                  <Link className="underline" href={`/projects/${selected}/kanban`}>
+                  <Link
+                    className='underline'
+                    href={`/projects/${selected}/kanban`}
+                  >
                     Abrir Kanban do projeto
                   </Link>{' '}
                   para criar/editar posts
                 </li>
               )}
               <li>
-                <Link className="underline" href="/help/cronogramas">
+                <Link className='underline' href='/help/cronogramas'>
                   Ajuda: como gerar cronogramas
                 </Link>
               </li>
-              <li>Gerar conteúdo com IA no modal, revisar e inserir; usar Calendário para distribuir.</li>
+              <li>
+                Gerar conteúdo com IA no modal, revisar e inserir; usar
+                Calendário para distribuir.
+              </li>
             </ul>
           </details>
 
           <details>
-            <summary className="cursor-pointer font-medium text-sm">
+            <summary className='cursor-pointer font-medium text-sm'>
               Cliente (review público)
             </summary>
-            <ul className="list-disc ml-5 text-xs mt-1 space-y-1">
+            <ul className='list-disc ml-5 text-xs mt-1 space-y-1'>
               {latestReviewPath ? (
                 <li>
-                  <a className="underline" href={latestReviewPath} target="_blank" rel="noreferrer">
-                    Abrir página pública de aprovação (todos os posts do projeto)
+                  <a
+                    className='underline'
+                    href={latestReviewPath}
+                    target='_blank'
+                    rel='noreferrer'
+                  >
+                    Abrir página pública de aprovação (todos os posts do
+                    projeto)
                   </a>
                 </li>
               ) : (
-                <li className="text-neutral-500">
+                <li className='text-neutral-500'>
                   Ainda não há link público — peça para o Admin gerar.
                 </li>
               )}
-              <li>Aprovar ou pedir ajustes post a post (comentário obrigatório ao pedir ajustes).</li>
+              <li>
+                Aprovar ou pedir ajustes post a post (comentário obrigatório ao
+                pedir ajustes).
+              </li>
               <li>As decisões refletem no Kanban da agência.</li>
             </ul>
           </details>

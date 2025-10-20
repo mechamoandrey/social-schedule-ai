@@ -23,10 +23,11 @@ try {
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
   );
 
-  const { data: authData, error: authError } = await supabase.auth.signInWithPassword({
-    email: TEST_EMAIL,
-    password: TEST_PASSWORD,
-  });
+  const { data: authData, error: authError } =
+    await supabase.auth.signInWithPassword({
+      email: TEST_EMAIL,
+      password: TEST_PASSWORD,
+    });
 
   if (authError) {
     throw new Error(`Falha na autenticação: ${authError.message}`);
@@ -44,7 +45,9 @@ try {
     .limit(1);
 
   if (clientsError || !clients || clients.length === 0) {
-    throw new Error('Nenhum cliente encontrado no banco. Execute o seed primeiro.');
+    throw new Error(
+      'Nenhum cliente encontrado no banco. Execute o seed primeiro.'
+    );
   }
 
   const testClient = clients[0];
@@ -62,7 +65,7 @@ try {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'Authorization': `Bearer ${accessToken}`,
+      Authorization: `Bearer ${accessToken}`,
     },
     body: JSON.stringify({
       clientId: testClient.id,
@@ -81,8 +84,12 @@ try {
 
   if (result.success) {
     console.log('✅ Scraping concluído com sucesso!\n');
-    console.log(`📄 Páginas scrapadas: ${result.meta?.pages_scraped || result.data?.total_pages}`);
-    console.log(`🏠 Produtos: ${result.data?.products_or_services?.length || 0}`);
+    console.log(
+      `📄 Páginas scrapadas: ${result.meta?.pages_scraped || result.data?.total_pages}`
+    );
+    console.log(
+      `🏠 Produtos: ${result.data?.products_or_services?.length || 0}`
+    );
     console.log(`📍 Location: ${result.data?.location || 'N/A'}`);
     console.log(`🏢 Business Type: ${result.data?.business_type || 'N/A'}`);
     console.log(`👥 Target Audience: ${result.data?.target_audience || 'N/A'}`);
@@ -102,7 +109,6 @@ try {
     JSON.stringify(result, null, 2)
   );
   console.log('💾 Resultado salvo em: tests/api-scraper.result.json\n');
-
 } catch (error) {
   console.error('\n❌ Erro no teste:', error.message);
   console.error(error.stack);

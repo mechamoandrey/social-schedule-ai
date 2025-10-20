@@ -5,11 +5,13 @@ Uma plataforma completa para agências de marketing digital gerenciarem cronogra
 ## 🚀 Funcionalidades
 
 ### 📅 Gerenciamento de Projetos
+
 - **Kanban Board**: Visualize e organize posts por status (A criar, Em revisão, Aprovado, Ajustar)
 - **Calendário Mensal**: Visualização em calendário com drag-and-drop para reorganizar posts
 - **Criação Manual**: Adicione posts individualmente com todos os detalhes necessários
 
 ### 🤖 Inteligência Artificial
+
 - **Geração de Cronogramas**: Crie cronogramas completos baseados em parâmetros do cliente
 - **Geração de Posts Individuais**: Gere posts específicos para feriados e datas especiais
 - **Controle de Uso**: Sistema de cotas com planos (Starter, Pro, Business)
@@ -18,21 +20,25 @@ Uma plataforma completa para agências de marketing digital gerenciarem cronogra
 - **Controle de Acesso**: Botões desabilitados quando cota esgotada
 
 ### 👥 Gestão de Equipe
+
 - **Sistema de Convites**: Convide membros para agências com diferentes níveis de acesso
 - **Roles**: agency_admin, social_media, client_viewer
 - **Múltiplas Agências**: Suporte para gerenciar várias agências
 
 ### 🔗 Revisão Pública
+
 - **Links de Revisão**: Compartilhe links seguros com clientes para revisar posts
 - **Ações de Revisão**: Aprovar ou solicitar ajustes diretamente
 - **Comentários**: Sistema de comentários para feedback detalhado
 
 ### 📊 Controle de Qualidade
+
 - **Análise de Qualidade**: Verificação automática de frequência, feriados e consistência
 - **Sugestões de Feriados**: IA sugere feriados relevantes para o cliente
 - **Validação de Conteúdo**: Verificação de limites de caracteres e consistência
 
 ### 🛠️ Ferramentas de Desenvolvimento
+
 - **Hub de Desenvolvimento**: Página especial para desenvolvedores com login rápido
 - **Login Automático**: Teste diferentes perfis de usuário (Admin, Social Media, Cliente)
 - **Gestão de Projetos**: Visualização e navegação rápida entre projetos
@@ -49,19 +55,21 @@ Uma plataforma completa para agências de marketing digital gerenciarem cronogra
 
 ## 📋 Pré-requisitos
 
-- Node.js 18+ 
+- Node.js 18+
 - Conta no Supabase
 - Chave da API OpenAI (opcional, para funcionalidades de IA)
 
 ## 🚀 Instalação
 
 1. **Clone o repositório**
+
 ```bash
 git clone <repository-url>
 cd social-scheduler-ai
 ```
 
 2. **Instale as dependências**
+
 ```bash
 npm install
 # ou
@@ -69,7 +77,7 @@ yarn install
 ```
 
 3. **Configure as variáveis de ambiente**
-Crie um arquivo `.env.local` na raiz do projeto:
+   Crie um arquivo `.env.local` na raiz do projeto:
 
 ```env
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
@@ -78,7 +86,8 @@ OPENAI_API_KEY=your_openai_api_key
 ```
 
 4. **Configure o banco de dados**
-Execute as migrações SQL no Supabase (arquivos em `supabase/migrations/`):
+   Execute as migrações SQL no Supabase (arquivos em `supabase/migrations/`):
+
 - `001_init.sql` - Estrutura inicial
 - `002_ai_plans.sql` - Planos e uso de IA
 - `003_invitations.sql` - Sistema de convites
@@ -86,6 +95,7 @@ Execute as migrações SQL no Supabase (arquivos em `supabase/migrations/`):
 - `005_reset_seed.sql` - Dados de exemplo
 
 5. **Execute o projeto**
+
 ```bash
 npm run dev
 # ou
@@ -136,28 +146,34 @@ npm run dev:seed     # Reset de dados de desenvolvimento
 ## 🎯 Como Usar
 
 ### 1. Criar uma Agência
+
 - Faça login e crie sua primeira agência
 - Configure o plano (Starter, Pro ou Business)
 
 ### 2. Adicionar Membros
+
 - Use o sistema de convites para adicionar membros da equipe
 - Defina roles apropriados para cada membro
 
 ### 3. Criar Projetos
+
 - Crie projetos para cada cliente
 - Configure o mês e informações do cliente
 
 ### 4. Gerar Cronogramas
+
 - Use a IA para gerar cronogramas completos
 - Ajuste parâmetros como frequência, tom de voz, produtos
 - Revise e edite posts antes de inserir
 
 ### 5. Gerenciar Posts
+
 - Use o Kanban para organizar posts por status
 - Visualize no calendário para ver distribuição temporal
 - Compartilhe links de revisão com clientes
 
 ### 6. Desenvolvimento e Testes
+
 - Acesse `/dev` para o hub de desenvolvimento (apenas local)
 - Use login rápido para testar diferentes perfis
 - Monitore uso de IA em tempo real
@@ -173,11 +189,11 @@ npm run dev:seed     # Reset de dados de desenvolvimento
 
 ## 📈 Planos e Limites
 
-| Plano | Membros | Clientes | Posts IA/mês |
-|-------|---------|----------|--------------|
-| Starter | 3 | 5 | 50 |
-| Pro | 10 | 20 | 300 |
-| Business | 50 | 200 | 3000 |
+| Plano    | Membros | Clientes | Posts IA/mês |
+| -------- | ------- | -------- | ------------ |
+| Starter  | 3       | 5        | 50           |
+| Pro      | 10      | 20       | 300          |
+| Business | 50      | 200      | 3000         |
 
 ## 🤝 Contribuição
 
@@ -194,6 +210,7 @@ Este projeto está sob a licença MIT. Veja o arquivo `LICENSE` para mais detalh
 ## 🆘 Suporte
 
 Para suporte e dúvidas:
+
 - Abra uma issue no GitHub
 - Consulte a documentação em `/help/cronogramas`
 - Entre em contato com a equipe de desenvolvimento

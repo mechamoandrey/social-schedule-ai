@@ -1,5 +1,203 @@
-@import "tailwindcss";
+@import 'tailwindcss';
+
+/* === Tokens (light/dark) === */
+@layer base {
+  :root {
+    /* Core */
+    --background: 210 20% 98%;
+    --foreground: 220 40% 12%;
+
+    /* Primário (azul petróleo/índigo) */
+    --primary: 220 45% 20%;
+    --primary-light: 225 40% 35%;
+    --primary-dark: 220 50% 15%;
+    --primary-foreground: 210 20% 98%;
+
+    /* Secundário (coral/laranja) */
+    --secondary: 12 100% 67%;
+    --secondary-light: 18 100% 72%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* Estados/Acentos base */
+    --success: 142 71% 45%;
+    --warning: 38 92% 50%;
+    --error: 4 90% 58%;
+    --info: 217 91% 60%;
+
+    /* Completar tokens de estado (light/foreground) */
+    --success-foreground: 144 70% 98%;
+    --success-light: 142 70% 88%;
+
+    --warning-foreground: 48 96% 98%;
+    --warning-light: 38 96% 88%;
+
+    --error-foreground: 0 0% 100%;
+    --error-light: 4 100% 92%;
+
+    --info-foreground: 210 20% 98%;
+    --info-light: 217 90% 92%;
+
+    /* UI */
+    --muted: 210 16% 93%;
+    --muted-foreground: 215 14% 42%;
+    --accent: 210 16% 93%;
+    --accent-foreground: 220 40% 12%;
+    --destructive: 4 90% 58%;
+    --destructive-foreground: 0 0% 100%;
+    --border: 214 15% 85%;
+    --input: 214 15% 85%;
+    --ring: 220 45% 20%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 40% 12%;
+    --radius: 12px;
+
+    /* sombras */
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+    --shadow: 0 2px 8px -2px rgb(0 0 0 / 0.1);
+    --shadow-md: 0 4px 12px -3px rgb(0 0 0 / 0.12);
+    --shadow-lg: 0 10px 24px -8px rgb(0 0 0 / 0.15);
+  }
+
+  .dark {
+    --background: 220 40% 12%;
+    --foreground: 210 20% 98%;
+
+    --primary: 225 40% 35%;
+    --primary-light: 220 45% 20%;
+    --primary-dark: 220 40% 10%;
+    --primary-foreground: 210 20% 98%;
+
+    --secondary: 12 100% 67%;
+    --secondary-foreground: 0 0% 100%;
+
+    /* UI dark */
+    --muted: 215 25% 24%;
+    --muted-foreground: 213 14% 71%;
+    --accent: 215 25% 24%;
+    --accent-foreground: 210 20% 98%;
+    --border: 215 25% 24%;
+    --input: 215 25% 24%;
+    --ring: 225 40% 35%;
+    --card: 220 40% 12%;
+    --card-foreground: 210 20% 98%;
+
+    /* estados dark (ajuste a gosto) */
+    --success-foreground: 144 70% 98%;
+    --success-light: 142 35% 20%;
+
+    --warning-foreground: 48 96% 98%;
+    --warning-light: 38 35% 22%;
+
+    --error-foreground: 0 0% 100%;
+    --error-light: 4 40% 22%;
+
+    --info-foreground: 210 20% 98%;
+    --info-light: 217 35% 22%;
+  }
+
+  /* ⬇️ MOVER o seletor global para @layer base garante que UTILITIES sempre o sobrescrevam */
+  *,
+  ::before,
+  ::after {
+    border-color: hsl(var(--border));
+  }
+}
+
+/* === Tailwind v4: mapear tokens para classes (bg-*, text-*, border-*, etc.) === */
+@theme {
+  --color-background: hsl(var(--background));
+  --color-foreground: hsl(var(--foreground));
+  --color-primary: hsl(var(--primary));
+  --color-primary-foreground: hsl(var(--primary-foreground));
+  --color-secondary: hsl(var(--secondary));
+  --color-secondary-foreground: hsl(var(--secondary-foreground));
+  --color-muted: hsl(var(--muted));
+  --color-muted-foreground: hsl(var(--muted-foreground));
+  --color-accent: hsl(var(--accent));
+  --color-accent-foreground: hsl(var(--accent-foreground));
+  --color-destructive: hsl(var(--destructive));
+  --color-destructive-foreground: hsl(var(--destructive-foreground));
+  --color-border: hsl(var(--border));
+  --color-input: hsl(var(--input));
+  --color-ring: hsl(var(--ring));
+  --color-card: hsl(var(--card));
+  --color-card-foreground: hsl(var(--card-foreground));
+
+  /* Paleta de status para usar bg-success-light/20, text-success, etc. */
+  --color-success: hsl(var(--success));
+  --color-success-foreground: hsl(var(--success-foreground));
+  --color-success-light: hsl(var(--success-light));
+
+  --color-warning: hsl(var(--warning));
+  --color-warning-foreground: hsl(var(--warning-foreground));
+  --color-warning-light: hsl(var(--warning-light));
+
+  --color-error: hsl(var(--error));
+  --color-error-foreground: hsl(var(--error-foreground));
+  --color-error-light: hsl(var(--error-light));
+
+  --color-info: hsl(var(--info));
+  --color-info-foreground: hsl(var(--info-foreground));
+  --color-info-light: hsl(var(--info-light));
+}
+
+/* utilitários de elevação */
+.elevation-sm {
+  box-shadow: var(--shadow-sm);
+}
+.elevation {
+  box-shadow: var(--shadow);
+}
+.elevation-md {
+  box-shadow: var(--shadow-md);
+}
+.elevation-lg {
+  box-shadow: var(--shadow-lg);
+}
 
 body {
-  @apply bg-neutral-50 text-neutral-900;
+  @apply bg-background text-foreground;
+}
+
+@layer utilities {
+  /* Status helpers (caso queira usar fora do Alert) */
+  .status-success {
+    @apply bg-[hsl(var(--success-light))] text-[hsl(var(--success))] border-[hsl(var(--success))];
+  }
+  .status-warning {
+    @apply bg-[hsl(var(--warning-light))] text-[hsl(var(--warning))] border-[hsl(var(--warning))];
+  }
+  .status-error {
+    @apply bg-[hsl(var(--error-light))]   text-[hsl(var(--error))]   border-[hsl(var(--error))];
+  }
+  .status-info {
+    @apply bg-[hsl(var(--info-light))]    text-[hsl(var(--info))]    border-[hsl(var(--info))];
+  }
+
+  .elevation-sm {
+    box-shadow: var(--shadow-sm);
+  }
+  .elevation-base {
+    box-shadow: var(--shadow);
+  }
+  .elevation-md {
+    box-shadow: var(--shadow-md);
+  }
+  .elevation-lg {
+    box-shadow: var(--shadow-lg);
+  }
+
+  .transition-base {
+    transition: var(--transition-base);
+  }
+  .transition-smooth {
+    transition: var(--transition-smooth);
+  }
+
+  .line-clamp-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
 }
